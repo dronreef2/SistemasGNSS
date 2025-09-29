@@ -4,6 +4,7 @@ import com.geosat.gateway.model.RbmcRelatorioDTO;
 import com.geosat.gateway.model.RbmcFallbackResponse;
 import com.geosat.gateway.model.RbmcArquivoDTO;
 import com.geosat.gateway.service.RbmcService;
+import com.geosat.gateway.service.CircuitBreakerStateService;
 import jakarta.validation.constraints.Pattern;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
@@ -22,10 +23,12 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 @Validated
 public class RbmcController {
 
-    private final RbmcService service;
+        private final RbmcService service;
+        private final CircuitBreakerStateService cbState;
 
-    public RbmcController(RbmcService service) {
-        this.service = service;
+        public RbmcController(RbmcService service, CircuitBreakerStateService cbState) {
+                this.service = service;
+                this.cbState = cbState;
     }
 
     @GetMapping("/{estacao}/relatorio")
@@ -40,8 +43,8 @@ public class RbmcController {
     public ResponseEntity<Object> getRelatorio(
             @PathVariable("estacao") @Pattern(regexp = "^[A-Za-z]{4}$", message = "Estacao deve ter 4 letras") String estacao) {
         Object result = service.obterRelatorio(estacao);
-        if (result instanceof RbmcFallbackResponse) {
-            return ResponseEntity.status(503).body(result);
+                if (result instanceof RbmcFallbackResponse fb) {
+                        return withRetryAfterIfOpen(fb);
         }
         return ResponseEntity.ok(result);
     }
@@ -58,8 +61,8 @@ public class RbmcController {
             @PathVariable("ano") @Pattern(regexp = "^\\d{4}$") String ano,
             @PathVariable("dia") @Pattern(regexp = "^\\d{1,3}$") String dia) {
         Object result = service.obterRinex2(estacao, Integer.parseInt(ano), Integer.parseInt(dia));
-        if (result instanceof RbmcFallbackResponse) {
-            return ResponseEntity.status(503).body(result);
+                if (result instanceof RbmcFallbackResponse fb) {
+                        return withRetryAfterIfOpen(fb);
         }
         return ResponseEntity.ok(result);
     }
@@ -79,8 +82,8 @@ public class RbmcController {
             @PathVariable("minuto") @Pattern(regexp = "^(0|15|30|45)$") String minuto,
             @PathVariable("tipo") @Pattern(regexp = "(?i)^(MO|MN)$") String tipo) {
         Object result = service.obterRinex3_1s(estacao, Integer.parseInt(ano), Integer.parseInt(dia), Integer.parseInt(hora), Integer.parseInt(minuto), tipo);
-        if (result instanceof RbmcFallbackResponse) {
-            return ResponseEntity.status(503).body(result);
+                if (result instanceof RbmcFallbackResponse fb) {
+                        return withRetryAfterIfOpen(fb);
         }
         return ResponseEntity.ok(result);
     }
@@ -97,8 +100,8 @@ public class RbmcController {
             @PathVariable("ano") @Pattern(regexp = "^\\d{4}$") String ano,
             @PathVariable("dia") @Pattern(regexp = "^\\d{1,3}$") String dia) {
         Object result = service.obterRinex3_15s(estacao, Integer.parseInt(ano), Integer.parseInt(dia));
-        if (result instanceof RbmcFallbackResponse) {
-            return ResponseEntity.status(503).body(result);
+                if (result instanceof RbmcFallbackResponse fb) {
+                        return withRetryAfterIfOpen(fb);
         }
         return ResponseEntity.ok(result);
     }
@@ -114,11 +117,17 @@ public class RbmcController {
             @PathVariable("ano") @Pattern(regexp = "^\\d{4}$") String ano,
             @PathVariable("dia") @Pattern(regexp = "^\\d{1,3}$") String dia) {
         Object result = service.obterOrbitas(Integer.parseInt(ano), Integer.parseInt(dia));
-        if (result instanceof RbmcFallbackResponse) {
-            return ResponseEntity.status(503).body(result);
+                if (result instanceof RbmcFallbackResponse fb) {
+                        return withRetryAfterIfOpen(fb);
         }
         return ResponseEntity.ok(result);
     }
+
+        private ResponseEntity<Object> withRetryAfterIfOpen(RbmcFallbackResponse fb){
+                var builder = ResponseEntity.status(503);
+                cbState.remainingOpenSeconds().ifPresent(secs -> builder.header("Retry-After", String.valueOf(secs)));
+                return builder.body(fb);
+        }
 
     // Outros endpoints serão adicionados em PRs futuros
 }

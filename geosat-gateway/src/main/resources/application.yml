@@ -33,4 +33,8 @@ resilience4j:
         failureRateThreshold: 50
         waitDurationInOpenState: 30s
 
+rbmc:
+  circuitBreaker:
+    waitOpenSeconds: 30  # Usado para header Retry-After quando o CB está OPEN
+
 # (removido bloco duplicado spring)

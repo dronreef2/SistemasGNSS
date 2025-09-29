@@ -1,0 +1,27 @@
+# Maven / Java
+**/target/
+*.log
+hs_err_pid*
+
+# IDE / Editor
+.idea/
+*.iml
+.project
+.classpath
+.settings/
+.vscode/
+
+# OS / Misc
+.DS_Store
+Thumbs.db
+
+# Node (future frontend build tooling)
+node_modules/
+dist/
+
+# Coverage / Reports
+**/jacoco.exec
+**/surefire-reports/
+
+# Temporary
+*.tmp
