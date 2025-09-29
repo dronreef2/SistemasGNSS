@@ -21,7 +21,16 @@ public class EstacaoController {
     );
 
     @GetMapping
-    public List<EstacaoDTO> listar() { return ESTACOES; }
+    public List<EstacaoDTO> listar() {
+        // Deriva status rápido: hash define offset de minutos; > 120 min => OFFLINE
+        List<EstacaoDTO> out = new ArrayList<>();
+        for(EstacaoDTO e: ESTACOES){
+            long offsetMin = (Math.abs(Objects.hash(e.codigo())) % 900) + 3;
+            String status = offsetMin > 120 ? "OFFLINE" : "ONLINE";
+            out.add(new EstacaoDTO(e.codigo(), e.nome(), e.latitude(), e.longitude(), status));
+        }
+        return out;
+    }
 
     @GetMapping(value = "/geojson", produces = MediaType.APPLICATION_JSON_VALUE)
     public Map<String,Object> geojson(){
@@ -47,38 +56,70 @@ public class EstacaoController {
     }
 
     @GetMapping("/{codigo}/metadados")
-    public MetadadosEstacaoDTO metadados(@PathVariable String codigo){
-        // Placeholder simples
+    public MetadadosEstacaoDTO metadados(@PathVariable("codigo") String codigo){
+        // Placeholder: última observação 3–900 minutos atrás de forma pseudo-randômica
+        long offsetMin = (Math.abs(Objects.hash(codigo)) % 900) + 3; // entre 3 e 903 min
+        Instant ultima = Instant.now().minusSeconds(offsetMin * 60);
         return new MetadadosEstacaoDTO(codigo.toUpperCase(), "TRIMBLE NETR9", "TRM59800.00", 1.234,
-                DateTimeFormatter.ISO_INSTANT.format(Instant.now().minusSeconds(600)));
+                DateTimeFormatter.ISO_INSTANT.format(ultima));
     }
 
     @GetMapping("/{codigo}/snr")
-    public SnrSerieDTO snr(@PathVariable String codigo, @RequestParam int ano, @RequestParam int dia){
-        int points = 120; // placeholder
-        List<SnrSampleDTO> list = new ArrayList<>(points);
+    public SnrSerieDTO snr(@PathVariable("codigo") String codigo,
+                           @RequestParam(name = "ano") int ano,
+                           @RequestParam(name = "dia") int dia,
+                           @RequestParam(name = "max", required = false, defaultValue = "300") int max){
+        int rawPoints = 1440; // 1 ponto por minuto do dia
+        List<SnrSampleDTO> raw = new ArrayList<>(rawPoints);
         Instant base = Instant.parse(ano + "-01-01T00:00:00Z").plusSeconds((long)(dia-1) * 86400L);
         ThreadLocalRandom r = ThreadLocalRandom.current();
-        for(int i=0;i<points;i++){
-            Instant t = base.plusSeconds(i* (86400L/points));
-            list.add(new SnrSampleDTO(t.toString(), "G"+String.format("%02d", (i%10)+1), 30 + r.nextDouble()*20));
+        for(int i=0;i<rawPoints;i++){
+            Instant t = base.plusSeconds(i * 60L);
+            raw.add(new SnrSampleDTO(t.toString(), "G"+String.format("%02d", (i%28)+1), 25 + r.nextDouble()*25));
         }
-        return new SnrSerieDTO(codigo.toUpperCase(), ano, dia, list);
+        List<SnrSampleDTO> decimated = decimateSnr(raw, max);
+        return new SnrSerieDTO(codigo.toUpperCase(), ano, dia, decimated);
     }
 
     @GetMapping("/{codigo}/posicoes")
-    public PosicaoSerieDTO posicoes(@PathVariable String codigo, @RequestParam int ano, @RequestParam int dia){
-        int points = 120;
-        List<PosicaoSampleDTO> list = new ArrayList<>(points);
+    public PosicaoSerieDTO posicoes(@PathVariable("codigo") String codigo,
+                                    @RequestParam(name = "ano") int ano,
+                                    @RequestParam(name = "dia") int dia,
+                                    @RequestParam(name = "max", required = false, defaultValue = "300") int max){
+        int rawPoints = 2880; // 30s step
         EstacaoDTO baseEst = ESTACOES.stream().filter(e->e.codigo().equalsIgnoreCase(codigo)).findFirst().orElse(ESTACOES.get(0));
         double lat = baseEst.latitude();
         double lon = baseEst.longitude();
         ThreadLocalRandom rand = ThreadLocalRandom.current();
         Instant base = Instant.parse(ano + "-01-01T00:00:00Z").plusSeconds((long)(dia-1) * 86400L);
-        for(int i=0;i<points;i++){
-            Instant t = base.plusSeconds(i* (86400L/points));
-            list.add(new PosicaoSampleDTO(t.toString(), lat + rand.nextDouble(-0.0005,0.0005), lon + rand.nextDouble(-0.0005,0.0005), 400 + rand.nextDouble(-2,2)));
+        List<PosicaoSampleDTO> raw = new ArrayList<>(rawPoints);
+        for(int i=0;i<rawPoints;i++){
+            Instant t = base.plusSeconds(i*30L);
+            raw.add(new PosicaoSampleDTO(t.toString(), lat + rand.nextDouble(-0.0005,0.0005), lon + rand.nextDouble(-0.0005,0.0005), 400 + rand.nextDouble(-2,2)));
         }
-        return new PosicaoSerieDTO(codigo.toUpperCase(), ano, dia, "WGS84", list);
+        List<PosicaoSampleDTO> decimated = decimatePos(raw, max);
+        return new PosicaoSerieDTO(codigo.toUpperCase(), ano, dia, "WGS84", decimated);
+    }
+
+    private List<SnrSampleDTO> decimateSnr(List<SnrSampleDTO> raw, int max){
+        if(raw.size() <= max) return raw;
+        double step = (double) raw.size() / max;
+        List<SnrSampleDTO> out = new ArrayList<>(max);
+        for(int i=0;i<max;i++){
+            int idx = (int)Math.floor(i*step);
+            out.add(raw.get(idx));
+        }
+        return out;
+    }
+
+    private List<PosicaoSampleDTO> decimatePos(List<PosicaoSampleDTO> raw, int max){
+        if(raw.size() <= max) return raw;
+        double step = (double) raw.size() / max;
+        List<PosicaoSampleDTO> out = new ArrayList<>(max);
+        for(int i=0;i<max;i++){
+            int idx = (int)Math.floor(i*step);
+            out.add(raw.get(idx));
+        }
+        return out;
     }
 }

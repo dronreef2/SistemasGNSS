@@ -22,10 +22,10 @@ export async function getMetadados(codigo){
   return fetchJson(`${BASE}/estacoes/${codigo}/metadados`);
 }
 
-export async function getSnr(codigo, ano, dia){
-  return fetchJson(`${BASE}/estacoes/${codigo}/snr?ano=${ano}&dia=${dia}`);
+export async function getSnr(codigo, ano, dia, max){
+  return fetchJson(`${BASE}/estacoes/${codigo}/snr?ano=${ano}&dia=${dia}&max=${max}`);
 }
 
-export async function getPosicoes(codigo, ano, dia){
-  return fetchJson(`${BASE}/estacoes/${codigo}/posicoes?ano=${ano}&dia=${dia}`);
+export async function getPosicoes(codigo, ano, dia, max){
+  return fetchJson(`${BASE}/estacoes/${codigo}/posicoes?ano=${ano}&dia=${dia}&max=${max}`);
 }

@@ -59,13 +59,17 @@ async function loadSeries(){
   const { estacaoSelecionada, data:{ano,dia} } = state;
   if(!(estacaoSelecionada && ano && dia)) return;
   const key = `${estacaoSelecionada}-${ano}-${dia}`;
+  document.getElementById('snrChart').classList.add('loading');
+  document.getElementById('posChart').classList.add('loading');
   if(!state.snrCache[key]){
-    try { state.snrCache[key] = await getSnr(estacaoSelecionada, ano, dia); } catch { state.snrCache[key] = { samples: [] }; }
+    try { state.snrCache[key] = await getSnr(estacaoSelecionada, ano, dia, 300); } catch { state.snrCache[key] = { samples: [] }; }
   }
   if(!state.posicoesCache[key]){
-    try { state.posicoesCache[key] = await getPosicoes(estacaoSelecionada, ano, dia); } catch { state.posicoesCache[key] = { samples: [] }; }
+    try { state.posicoesCache[key] = await getPosicoes(estacaoSelecionada, ano, dia, 300); } catch { state.posicoesCache[key] = { samples: [] }; }
   }
   renderCharts(state.snrCache[key], state.posicoesCache[key]);
+  document.getElementById('snrChart').classList.remove('loading');
+  document.getElementById('posChart').classList.remove('loading');
 }
 
 function validateAndSetDate(){
