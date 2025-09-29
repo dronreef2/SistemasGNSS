@@ -1,0 +1,5 @@
+/workspaces/SistemasGNSS/geosat-gateway/src/test/java/com/geosat/gateway/RbmcControllerTest.java
+/workspaces/SistemasGNSS/geosat-gateway/src/test/java/com/geosat/gateway/client/RbmcHttpClientRetryTest.java
+/workspaces/SistemasGNSS/geosat-gateway/src/test/java/com/geosat/gateway/client/RbmcHttpClientCircuitBreakerTest.java
+/workspaces/SistemasGNSS/geosat-gateway/src/test/java/com/geosat/gateway/RbmcAdditionalEndpointsControllerTest.java
+/workspaces/SistemasGNSS/geosat-gateway/src/test/java/com/geosat/gateway/RedisFallbackIntegrationTest.java

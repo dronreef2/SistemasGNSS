@@ -1,0 +1,36 @@
+server:
+  port: 8080
+spring:
+  application:
+    name: geosat-gateway
+  data:
+    redis:
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+
+logging:
+  level:
+    root: INFO
+    com.geosat.gateway: INFO
+
+resilience4j:
+  retry:
+    instances:
+      rbmcClient:
+        max-attempts: 4
+        wait-duration: 500ms
+        enable-exponential-backoff: true
+        exponential-backoff-multiplier: 2
+  circuitbreaker:
+    instances:
+      rbmcClient:
+        slidingWindowSize: 20
+        failureRateThreshold: 50
+        waitDurationInOpenState: 30s
+
+# (removido bloco duplicado spring)

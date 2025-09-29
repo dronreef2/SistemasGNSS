@@ -1,0 +1,116 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>RbmcHttpClient.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">GeoSat Gateway</a> &gt; <a href="index.source.html" class="el_package">com.geosat.gateway.client</a> &gt; <span class="el_source">RbmcHttpClient.java</span></div><h1>RbmcHttpClient.java</h1><pre class="source lang-java linenums">package com.geosat.gateway.client;
+
+import org.apache.hc.client5.http.impl.classic.CloseableHttpClient;
+import org.apache.hc.client5.http.classic.methods.HttpGet;
+import org.apache.hc.client5.http.impl.classic.CloseableHttpResponse;
+import org.apache.hc.core5.http.HttpStatus;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Component;
+import io.github.resilience4j.circuitbreaker.CircuitBreaker;
+import io.github.resilience4j.circuitbreaker.CircuitBreakerRegistry;
+import io.github.resilience4j.retry.Retry;
+import io.github.resilience4j.retry.RetryRegistry;
+import io.micrometer.core.instrument.Counter;
+import io.micrometer.core.instrument.MeterRegistry;
+import io.micrometer.core.instrument.Timer;
+
+import java.io.IOException;
+import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
+import java.time.Duration;
+
+/**
+ * Cliente de baixo nível para RBMC usando HttpComponents Core 5.
+ * Fornece métodos simples que retornam bytes/strings.
+ * Em PRs futuros: streaming para arquivos, cache, métricas detalhadas.
+ */
+@Component
+public class RbmcHttpClient {
+
+<span class="fc" id="L32">    private static final Logger log = LoggerFactory.getLogger(RbmcHttpClient.class);</span>
+
+    private final CloseableHttpClient httpClient;
+    private final String baseUrl;
+    private final CircuitBreaker circuitBreaker;
+    private final Retry retry;
+    private final Counter requestsTotal;
+    private final Counter retriesTotal;
+    private final Timer latencyTimer;
+
+    public RbmcHttpClient(CloseableHttpClient httpClient,
+                          RetryRegistry retryRegistry,
+                          CircuitBreakerRegistry circuitBreakerRegistry,
+                          MeterRegistry meterRegistry,
+<span class="fc" id="L46">                          @Value(&quot;${rbmc.base-url:https://servicodados.ibge.gov.br/api/v1/rbmc}&quot;) String baseUrl) {</span>
+<span class="fc" id="L47">        this.httpClient = httpClient;</span>
+<span class="fc" id="L48">        this.baseUrl = baseUrl;</span>
+<span class="fc" id="L49">        this.retry = retryRegistry.retry(&quot;rbmcClient&quot;);</span>
+<span class="fc" id="L50">        this.circuitBreaker = circuitBreakerRegistry.circuitBreaker(&quot;rbmcClient&quot;);</span>
+<span class="fc" id="L51">        this.requestsTotal = meterRegistry.counter(&quot;rbmc.requests.total&quot;);</span>
+<span class="fc" id="L52">        this.retriesTotal = meterRegistry.counter(&quot;rbmc.retries.total&quot;);</span>
+<span class="fc" id="L53">        this.latencyTimer = Timer.builder(&quot;rbmc.requests.latency_seconds&quot;)</span>
+<span class="fc" id="L54">                .description(&quot;Latência das chamadas RBMC&quot;)</span>
+<span class="fc" id="L55">                .register(meterRegistry);</span>
+        // Eventos de retry incrementam contador
+<span class="fc" id="L57">        this.retry.getEventPublisher().onRetry(ev -&gt; this.retriesTotal.increment());</span>
+        // Gauge para estado do circuit breaker
+<span class="pc" id="L59">        meterRegistry.gauge(&quot;rbmc.circuitbreaker.state&quot;, this.circuitBreaker, cb -&gt; mapState(cb.getState()));</span>
+<span class="fc" id="L60">    }</span>
+
+    public String obterRelatorio(String estacao) throws IOException {
+<span class="fc" id="L63">        String url = baseUrl + &quot;/relatorio/&quot; + estacao.toLowerCase();</span>
+<span class="nc" id="L64">        return executeWithResilience(url);</span>
+    }
+
+    protected String executeWithResilience(String url) throws IOException {
+<span class="pc" id="L68">        java.util.concurrent.Callable&lt;String&gt; raw = () -&gt; rawExecute(url);</span>
+<span class="fc" id="L69">        java.util.concurrent.Callable&lt;String&gt; decorated = io.github.resilience4j.circuitbreaker.CircuitBreaker.decorateCallable(circuitBreaker, raw);</span>
+<span class="fc" id="L70">        decorated = io.github.resilience4j.retry.Retry.decorateCallable(retry, decorated);</span>
+        try {
+<span class="nc" id="L72">            return latencyTimer.recordCallable(decorated);</span>
+<span class="fc" id="L73">        } catch (Exception e) {</span>
+<span class="fc bfc" id="L74" title="All 2 branches covered.">            if (e instanceof IOException ioe) {</span>
+<span class="fc" id="L75">                throw ioe;</span>
+            }
+<span class="pc bpc" id="L77" title="1 of 2 branches missed.">            if (e.getCause() instanceof IOException ioe) {</span>
+<span class="nc" id="L78">                throw ioe; // unwrap</span>
+            }
+<span class="fc" id="L80">            throw new IOException(&quot;Falha não IO ao chamar RBMC: &quot; + e.getMessage(), e);</span>
+        }
+    }
+
+    protected String rawExecute(String url) throws IOException {
+<span class="fc" id="L85">        long start = System.nanoTime();</span>
+<span class="fc" id="L86">        HttpGet get = new HttpGet(url);</span>
+        // Cada tentativa HTTP real conta como request total
+<span class="fc" id="L88">        requestsTotal.increment();</span>
+<span class="nc" id="L89">        try (CloseableHttpResponse response = httpClient.execute(get)) {</span>
+<span class="nc" id="L90">            int status = response.getCode();</span>
+<span class="nc bnc" id="L91" title="All 2 branches missed.">            if (status != HttpStatus.SC_OK) {</span>
+<span class="nc" id="L92">                throw new IOException(&quot;HTTP status &quot; + status + &quot; para &quot; + url);</span>
+            }
+<span class="nc" id="L94">            try (InputStream is = response.getEntity().getContent()) {</span>
+<span class="nc" id="L95">                byte[] bytes = is.readAllBytes();</span>
+<span class="nc" id="L96">                return new String(bytes, StandardCharsets.ISO_8859_1); // PDFs binários serão tratados diferente depois</span>
+            }
+<span class="fc" id="L98">        } catch (IOException e) {</span>
+<span class="fc" id="L99">            long elapsedMs = Duration.ofNanos(System.nanoTime() - start).toMillis();</span>
+<span class="fc" id="L100">            log.warn(&quot;falha_http url={} elapsedMs={} msg={}&quot;, url, elapsedMs, e.getMessage());</span>
+<span class="fc" id="L101">            throw e;</span>
+        }
+    }
+
+    private int mapState(CircuitBreaker.State state) {
+<span class="nc bnc" id="L106" title="All 6 branches missed.">        return switch (state) {</span>
+<span class="nc" id="L107">            case CLOSED -&gt; 0;</span>
+<span class="nc" id="L108">            case OPEN -&gt; 1;</span>
+<span class="nc" id="L109">            case HALF_OPEN -&gt; 2;</span>
+<span class="nc" id="L110">            case DISABLED -&gt; 3;</span>
+<span class="nc" id="L111">            case FORCED_OPEN -&gt; 4;</span>
+<span class="nc" id="L112">            case METRICS_ONLY -&gt; 5;</span>
+        };
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.11.202310140853</span></div></body></html>

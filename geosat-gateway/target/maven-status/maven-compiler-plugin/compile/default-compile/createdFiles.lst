@@ -1,0 +1,9 @@
+com/geosat/gateway/model/RbmcRelatorioDTO.class
+com/geosat/gateway/client/RbmcHttpClient$1.class
+com/geosat/gateway/controller/GlobalExceptionHandler.class
+com/geosat/gateway/config/RedisConfig.class
+com/geosat/gateway/model/ErrorResponse.class
+com/geosat/gateway/service/RedisCacheService.class
+com/geosat/gateway/GeosatGatewayApplication.class
+com/geosat/gateway/config/HttpClientConfig.class
+com/geosat/gateway/model/RbmcFallbackResponse.class

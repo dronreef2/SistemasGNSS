@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>RbmcService.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">GeoSat Gateway</a> &gt; <a href="index.source.html" class="el_package">com.geosat.gateway.service</a> &gt; <span class="el_source">RbmcService.java</span></div><h1>RbmcService.java</h1><pre class="source lang-java linenums">package com.geosat.gateway.service;
+
+import com.geosat.gateway.client.RbmcHttpClient;
+import com.geosat.gateway.model.RbmcFallbackResponse;
+import com.geosat.gateway.model.RbmcRelatorioDTO;
+import io.github.resilience4j.circuitbreaker.CallNotPermittedException;
+import org.springframework.stereotype.Service;
+
+import java.time.Instant;
+import java.time.Duration;
+import java.util.Map;
+
+/**
+ * Service placeholder: no futuro fará chamadas resilientes ao RBMC + cache Redis.
+ */
+@Service
+public class RbmcService {
+
+    private final RbmcHttpClient client;
+    private final RedisCacheService cacheService;
+
+<span class="fc" id="L22">    public RbmcService(RbmcHttpClient client, RedisCacheService cacheService) {</span>
+<span class="fc" id="L23">        this.client = client;</span>
+<span class="fc" id="L24">        this.cacheService = cacheService;</span>
+<span class="fc" id="L25">    }</span>
+
+    public Object obterRelatorio(String estacao) {
+<span class="fc" id="L28">        String upper = estacao.toUpperCase();</span>
+        try {
+<span class="fc" id="L30">            client.obterRelatorio(upper); // Ignorando conteúdo binário por enquanto</span>
+<span class="fc" id="L31">            RbmcRelatorioDTO dto = new RbmcRelatorioDTO(</span>
+                    upper,
+                    &quot;pdf&quot;,
+<span class="fc" id="L34">                    &quot;https://servicodados.ibge.gov.br/api/v1/rbmc/relatorio/&quot; + upper.toLowerCase(),</span>
+                    &quot;Relatório técnico (placeholder)&quot;,
+                    null,
+<span class="fc" id="L37">                    Instant.now()</span>
+            );
+<span class="fc" id="L39">            cacheService.putMetadata(upper, Map.of(</span>
+<span class="fc" id="L40">                    &quot;link&quot;, dto.link(),</span>
+<span class="fc" id="L41">                    &quot;tipo&quot;, dto.tipo(),</span>
+<span class="fc" id="L42">                    &quot;ultimaAtualizacao&quot;, dto.ultimaAtualizacao().toString()</span>
+<span class="fc" id="L43">            ), Duration.ofHours(12));</span>
+<span class="fc" id="L44">            return dto;</span>
+<span class="nc" id="L45">        } catch (CallNotPermittedException cbOpen) {</span>
+<span class="nc" id="L46">            return fallback(upper, &quot;Circuit breaker aberto — a estação foi tomar um café ☕&quot;);</span>
+<span class="fc" id="L47">        } catch (Exception e) {</span>
+<span class="fc" id="L48">            return fallback(upper, &quot;Falha temporária — a estação tirou uma soneca 🚀&quot;);</span>
+        }
+    }
+
+    private RbmcFallbackResponse fallback(String estacao, String mensagem) {
+<span class="fc" id="L53">        return new RbmcFallbackResponse(</span>
+                estacao,
+                &quot;indisponivel&quot;,
+                mensagem,
+<span class="fc" id="L57">                Instant.now(),</span>
+<span class="fc" id="L58">                cacheService.getMetadata(estacao).orElse(Map.of())</span>
+        );
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.11.202310140853</span></div></body></html>
