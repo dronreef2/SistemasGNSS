@@ -1,7 +1,10 @@
 package com.geosat.gateway.controller;
 
 import com.geosat.gateway.model.*;
+import io.micrometer.core.instrument.MeterRegistry;
+import org.springframework.http.CacheControl;
 import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.Instant;
@@ -19,6 +22,12 @@ public class EstacaoController {
             new EstacaoDTO("MANA", "Manaus", -3.118, -60.021, "OFFLINE"),
             new EstacaoDTO("POAL", "Porto Alegre", -30.027, -51.228, "ONLINE")
     );
+
+    private final MeterRegistry meterRegistry;
+
+    public EstacaoController(MeterRegistry meterRegistry) {
+        this.meterRegistry = meterRegistry;
+    }
 
     @GetMapping
     public List<EstacaoDTO> listar() {
@@ -65,7 +74,7 @@ public class EstacaoController {
     }
 
     @GetMapping("/{codigo}/snr")
-    public SnrSerieDTO snr(@PathVariable("codigo") String codigo,
+    public ResponseEntity<SnrSerieDTO> snr(@PathVariable("codigo") String codigo,
                            @RequestParam(name = "ano") int ano,
                            @RequestParam(name = "dia") int dia,
                            @RequestParam(name = "max", required = false, defaultValue = "300") int max){
@@ -77,12 +86,17 @@ public class EstacaoController {
             Instant t = base.plusSeconds(i * 60L);
             raw.add(new SnrSampleDTO(t.toString(), "G"+String.format("%02d", (i%28)+1), 25 + r.nextDouble()*25));
         }
-        List<SnrSampleDTO> decimated = decimateSnr(raw, max);
-        return new SnrSerieDTO(codigo.toUpperCase(), ano, dia, decimated);
+    List<SnrSampleDTO> decimated = decimateSnr(raw, max);
+    meterRegistry.counter("estacoes.snr.decimations", "codigo", codigo.toUpperCase()).increment();
+    meterRegistry.gauge("estacoes.snr.size.before", java.util.Collections.emptyList(), raw.size());
+    meterRegistry.gauge("estacoes.snr.size.after", java.util.Collections.emptyList(), decimated.size());
+    return ResponseEntity.ok()
+        .cacheControl(CacheControl.maxAge(java.time.Duration.ofSeconds(30)).cachePublic())
+        .body(new SnrSerieDTO(codigo.toUpperCase(), ano, dia, decimated));
     }
 
     @GetMapping("/{codigo}/posicoes")
-    public PosicaoSerieDTO posicoes(@PathVariable("codigo") String codigo,
+    public ResponseEntity<PosicaoSerieDTO> posicoes(@PathVariable("codigo") String codigo,
                                     @RequestParam(name = "ano") int ano,
                                     @RequestParam(name = "dia") int dia,
                                     @RequestParam(name = "max", required = false, defaultValue = "300") int max){
@@ -97,8 +111,13 @@ public class EstacaoController {
             Instant t = base.plusSeconds(i*30L);
             raw.add(new PosicaoSampleDTO(t.toString(), lat + rand.nextDouble(-0.0005,0.0005), lon + rand.nextDouble(-0.0005,0.0005), 400 + rand.nextDouble(-2,2)));
         }
-        List<PosicaoSampleDTO> decimated = decimatePos(raw, max);
-        return new PosicaoSerieDTO(codigo.toUpperCase(), ano, dia, "WGS84", decimated);
+    List<PosicaoSampleDTO> decimated = decimatePos(raw, max);
+    meterRegistry.counter("estacoes.pos.decimations", "codigo", codigo.toUpperCase()).increment();
+    meterRegistry.gauge("estacoes.pos.size.before", java.util.Collections.emptyList(), raw.size());
+    meterRegistry.gauge("estacoes.pos.size.after", java.util.Collections.emptyList(), decimated.size());
+    return ResponseEntity.ok()
+        .cacheControl(CacheControl.maxAge(java.time.Duration.ofSeconds(30)).cachePublic())
+        .body(new PosicaoSerieDTO(codigo.toUpperCase(), ano, dia, "WGS84", decimated));
     }
 
     private List<SnrSampleDTO> decimateSnr(List<SnrSampleDTO> raw, int max){

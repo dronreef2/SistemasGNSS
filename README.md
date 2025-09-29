@@ -23,7 +23,7 @@ Fornecer uma API coesa e resiliente sobre os endpoints públicos da RBMC, adicio
 | Testes | Unit + integração (Redis Testcontainers) |
 | Streaming binário | Pendente (fase futura) |
 | Persistência domínio | Não iniciada |
-| Frontend | Não iniciado |
+| Frontend | Scaffold mapa + gráficos (placeholders) |
 
 ## 🧩 Arquitetura (Visão)
 Arquivo PlantUML: `plantuml/architecture.puml`.
@@ -70,6 +70,7 @@ Fallback:
 | Observabilidade | Micrometer + Actuator |
 | Docs | SpringDoc OpenAPI |
 | Testes | JUnit 5, Mockito, Testcontainers |
+| Frontend | HTML/CSS/JS (ES Modules), Leaflet, Chart.js |
 
 ## 🧪 Execução Local
 Pré-requisitos: JDK 17+, Maven, Docker (opcional para Redis).
@@ -85,6 +86,39 @@ Teste:
 curl -s http://localhost:8080/api/v1/rbmc/ALAR/relatorio | jq
 ```
 OpenAPI UI: `http://localhost:8080/swagger-ui.html`
+
+## 🌐 Frontend (Mapa / Séries)
+O frontend estático inicial está em `frontend/web` e é servido automaticamente em runtime via Spring em:
+
+- URL raiz: `http://localhost:8080/app`
+- Assets: `http://localhost:8080/app/js/...` (resource handler aponta para o diretório local)
+
+Funcionalidades atuais:
+1. Mapa Leaflet centralizado no Brasil com marcadores de estações (status derivado: atraso > 120min => OFFLINE).
+2. Seleção de estação por clique ou dropdown.
+3. Seleção de data (ano + dia juliano) + atalhos Hoje/Ontem.
+4. Botões de download (Relatório e RINEX2) habilitam conforme contexto.
+5. Metadados simulados (receptor, antena, altura, última observação).
+6. Séries SNR e Posição (lat/lon) geradas sinteticamente, com decimação adaptativa (`?max=300`).
+7. Spinner visual simples (redução de opacidade) durante carregamento de séries.
+
+Exemplo de chamadas de séries:
+```
+GET /api/v1/estacoes/ALAR/snr?ano=2025&dia=200&max=300
+GET /api/v1/estacoes/ALAR/posicoes?ano=2025&dia=200&max=300
+```
+
+Próximos incrementos planejados para o frontend:
+- Cache localStorage para última estação/data
+- Métrica de latência JS → endpoint técnico
+- Downsample mais inteligente (por variância / Douglas-Peucker)
+- Camada GeoJSON de órbitas (futuro)
+
+## 🧵 Decimação de Séries
+As séries brutas são geradas em alta resolução (SNR: 1/min; posições: cada 30s). A resposta aplica decimação uniforme se o total exceder `max` (default 300). Métricas futuras irão expor antes/depois.
+
+## 🔁 Cache-Control em Séries
+Endpoints de séries em breve terão cabeçalho `Cache-Control: public, max-age=30` (pendente) para permitir reuso curto em dashboards.
 
 ## 🛡️ Resiliência
 * Retry e CircuitBreaker programáticos (perfil de teste com tempos reduzidos).
