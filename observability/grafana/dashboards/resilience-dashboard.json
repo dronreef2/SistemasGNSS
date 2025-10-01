@@ -1,0 +1,100 @@
+{
+  "dashboard": {
+    "id": null,
+    "title": "GeoSat Gateway Resilience",
+    "tags": ["geosat", "gateway", "resilience"],
+    "timezone": "browser",
+    "panels": [
+      {
+        "id": 1,
+        "title": "Circuit Breaker State Timeline",
+        "type": "graph",
+        "targets": [
+          {
+            "expr": "rbmc_circuitbreaker_state",
+            "legendFormat": "State"
+          }
+        ]
+      },
+      {
+        "id": 2,
+        "title": "Retry Count",
+        "type": "graph",
+        "targets": [
+          {
+            "expr": "rate(rbmc_retries_total[5m])",
+            "legendFormat": "Retries"
+          }
+        ]
+      },
+      {
+        "id": 3,
+        "title": "Failure Rate (%)",
+        "type": "graph",
+        "targets": [
+          {
+            "expr": "(rate(rbmc_requests_total{status=~\"5..\"}[5m]) / rate(rbmc_requests_total[5m])) * 100",
+            "legendFormat": "Failure Rate %"
+          }
+        ],
+        "yAxes": [
+          {
+            "unit": "percent"
+          }
+        ]
+      },
+      {
+        "id": 4,
+        "title": "Recovery Time (OPEN state)",
+        "type": "stat",
+        "targets": [
+          {
+            "expr": "rbmc_circuitbreaker_state == 1",
+            "legendFormat": "In OPEN State"
+          }
+        ]
+      },
+      {
+        "id": 5,
+        "title": "Request Success vs Failure",
+        "type": "bargauge",
+        "targets": [
+          {
+            "expr": "rate(rbmc_requests_total{status=~\"2..\"}[5m])",
+            "legendFormat": "Success"
+          },
+          {
+            "expr": "rate(rbmc_requests_total{status=~\"5..\"}[5m])",
+            "legendFormat": "Failure"
+          }
+        ]
+      },
+      {
+        "id": 6,
+        "title": "Fallback Activation Count",
+        "type": "stat",
+        "targets": [
+          {
+            "expr": "rate(rbmc_fallback_total[5m])",
+            "legendFormat": "Fallbacks"
+          }
+        ]
+      }
+    ],
+    "time": {
+      "from": "now-6h",
+      "to": "now"
+    },
+    "timepicker": {},
+    "templating": {
+      "list": []
+    },
+    "annotations": {
+      "list": []
+    },
+    "refresh": "30s",
+    "schemaVersion": 27,
+    "version": 0,
+    "links": []
+  }
+}

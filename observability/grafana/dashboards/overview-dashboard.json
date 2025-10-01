@@ -1,0 +1,139 @@
+{
+  "dashboard": {
+    "id": null,
+    "title": "GeoSat Gateway Overview",
+    "tags": ["geosat", "gateway", "overview"],
+    "timezone": "browser",
+    "panels": [
+      {
+        "id": 1,
+        "title": "Request Rate (requests/sec)",
+        "type": "graph",
+        "targets": [
+          {
+            "expr": "rate(rbmc_requests_total[5m])",
+            "legendFormat": "Request Rate"
+          }
+        ],
+        "yAxes": [
+          {
+            "unit": "reqps"
+          }
+        ]
+      },
+      {
+        "id": 2,
+        "title": "Average Latency (ms)",
+        "type": "graph",
+        "targets": [
+          {
+            "expr": "rate(rbmc_requests_latency_seconds_sum[5m]) / rate(rbmc_requests_latency_seconds_count[5m]) * 1000",
+            "legendFormat": "Avg Latency"
+          }
+        ],
+        "yAxes": [
+          {
+            "unit": "ms"
+          }
+        ]
+      },
+      {
+        "id": 3,
+        "title": "Error Rate (%)",
+        "type": "graph",
+        "targets": [
+          {
+            "expr": "(rate(rbmc_requests_total{status=~\"5..\"}[5m]) / rate(rbmc_requests_total[5m])) * 100",
+            "legendFormat": "Error Rate %"
+          }
+        ],
+        "yAxes": [
+          {
+            "unit": "percent"
+          }
+        ]
+      },
+      {
+        "id": 4,
+        "title": "Circuit Breaker State",
+        "type": "stat",
+        "targets": [
+          {
+            "expr": "rbmc_circuitbreaker_state",
+            "legendFormat": "State"
+          }
+        ]
+      },
+      {
+        "id": 5,
+        "title": "HTTP Status Codes",
+        "type": "table",
+        "targets": [
+          {
+            "expr": "sum(rate(http_server_requests_seconds_count[5m])) by (status)",
+            "legendFormat": "{{status}}"
+          }
+        ]
+      },
+      {
+        "id": 6,
+        "title": "JVM Memory Usage",
+        "type": "graph",
+        "targets": [
+          {
+            "expr": "jvm_memory_used_bytes / jvm_memory_max_bytes * 100",
+            "legendFormat": "Memory Usage %"
+          }
+        ],
+        "yAxes": [
+          {
+            "unit": "percent"
+          }
+        ]
+      },
+      {
+        "id": 7,
+        "title": "JVM GC Time",
+        "type": "graph",
+        "targets": [
+          {
+            "expr": "rate(jvm_gc_pause_seconds_sum[5m])",
+            "legendFormat": "GC Time"
+          }
+        ],
+        "yAxes": [
+          {
+            "unit": "s"
+          }
+        ]
+      }
+    ],
+    "time": {
+      "from": "now-1h",
+      "to": "now"
+    },
+    "timepicker": {},
+    "templating": {
+      "list": [
+        {
+          "name": "datasource",
+          "type": "datasource",
+          "query": "prometheus"
+        },
+        {
+          "name": "interval",
+          "type": "interval",
+          "auto": true,
+          "query": "1m,5m,10m,30m,1h"
+        }
+      ]
+    },
+    "annotations": {
+      "list": []
+    },
+    "refresh": "10s",
+    "schemaVersion": 27,
+    "version": 0,
+    "links": []
+  }
+}

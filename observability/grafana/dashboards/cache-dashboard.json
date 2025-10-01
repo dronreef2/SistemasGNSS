@@ -1,0 +1,116 @@
+{
+  "dashboard": {
+    "id": null,
+    "title": "GeoSat Gateway Cache Performance",
+    "tags": ["geosat", "gateway", "cache"],
+    "timezone": "browser",
+    "panels": [
+      {
+        "id": 1,
+        "title": "Cache Hit Rate (%)",
+        "type": "gauge",
+        "targets": [
+          {
+            "expr": "(rate(cache_gets_total{cache=\"rbmc\",result=\"hit\"}[5m]) / rate(cache_gets_total{cache=\"rbmc\"}[5m])) * 100",
+            "legendFormat": "Hit Rate %"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "unit": "percent"
+          }
+        }
+      },
+      {
+        "id": 2,
+        "title": "Cache Miss Rate (%)",
+        "type": "gauge",
+        "targets": [
+          {
+            "expr": "(rate(cache_gets_total{cache=\"rbmc\",result=\"miss\"}[5m]) / rate(cache_gets_total{cache=\"rbmc\"}[5m])) * 100",
+            "legendFormat": "Miss Rate %"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "unit": "percent"
+          }
+        }
+      },
+      {
+        "id": 3,
+        "title": "Redis Response Time",
+        "type": "graph",
+        "targets": [
+          {
+            "expr": "histogram_quantile(0.95, rate(redis_command_duration_seconds_bucket[5m]))",
+            "legendFormat": "95th percentile"
+          }
+        ],
+        "yAxes": [
+          {
+            "unit": "s"
+          }
+        ]
+      },
+      {
+        "id": 4,
+        "title": "Cache Size (keys count)",
+        "type": "stat",
+        "targets": [
+          {
+            "expr": "cache_size{cache=\"rbmc\"}",
+            "legendFormat": "Keys"
+          }
+        ]
+      },
+      {
+        "id": 5,
+        "title": "Cache Evictions",
+        "type": "graph",
+        "targets": [
+          {
+            "expr": "rate(cache_evictions_total{cache=\"rbmc\"}[5m])",
+            "legendFormat": "Evictions"
+          }
+        ]
+      },
+      {
+        "id": 6,
+        "title": "TTL Distribution",
+        "type": "heatmap",
+        "targets": [
+          {
+            "expr": "cache_ttl_seconds{cache=\"rbmc\"}",
+            "legendFormat": "TTL"
+          }
+        ]
+      }
+    ],
+    "time": {
+      "from": "now-1h",
+      "to": "now"
+    },
+    "timepicker": {},
+    "templating": {
+      "list": [
+        {
+          "name": "estacao",
+          "type": "custom",
+          "query": "ALAL,ALGO,BELE,BRFT,CDAZ,CORO,CRAT,EPIT,FZAS,GOIO,IMPE,JOI,LPRA,MANA,MGUE,OURO,PBOC,PEIX,PIR,POUS,PRU1,PRU2,REC,ROVE,SANT,SJC,SMAR,SPFR,UBAT,UFPR,UNB,UNIV,VILA",
+          "current": {
+            "text": "All",
+            "value": "$__all"
+          }
+        }
+      ]
+    },
+    "annotations": {
+      "list": []
+    },
+    "refresh": "10s",
+    "schemaVersion": 27,
+    "version": 0,
+    "links": []
+  }
+}
