@@ -1,5 +1,6 @@
 package com.geosat.gateway.client;
 
+import com.geosat.gateway.metrics.RbmcMetrics;
 import org.apache.hc.client5.http.impl.classic.CloseableHttpClient;
 import org.apache.hc.client5.http.classic.methods.HttpGet;
 import org.apache.hc.core5.http.HttpStatus;
@@ -38,14 +39,17 @@ public class RbmcHttpClient {
     private final Counter requestsTotal;
     private final Counter retriesTotal;
     private final Timer latencyTimer;
+    private final RbmcMetrics rbmcMetrics;
 
     public RbmcHttpClient(CloseableHttpClient httpClient,
                           RetryRegistry retryRegistry,
                           CircuitBreakerRegistry circuitBreakerRegistry,
                           MeterRegistry meterRegistry,
+                          RbmcMetrics rbmcMetrics,
                           @Value("${rbmc.base-url:https://servicodados.ibge.gov.br/api/v1/rbmc}") String baseUrl) {
         this.httpClient = httpClient;
         this.baseUrl = baseUrl;
+        this.rbmcMetrics = rbmcMetrics;
         this.retry = retryRegistry.retry("rbmcClient");
         this.circuitBreaker = circuitBreakerRegistry.circuitBreaker("rbmcClient");
         this.requestsTotal = meterRegistry.counter("rbmc.requests.total");
@@ -61,7 +65,15 @@ public class RbmcHttpClient {
 
     public String obterRelatorio(String estacao) throws IOException {
         String url = baseUrl + "/relatorio/" + estacao.toLowerCase();
-        return executeWithResilience(url);
+        Timer stationTimer = rbmcMetrics.getStationLatencyTimer(estacao);
+        try {
+            return stationTimer.recordCallable(() -> executeWithResilience(url));
+        } catch (Exception e) {
+            if (e instanceof IOException ioe) {
+                throw ioe;
+            }
+            throw new IOException("Error recording station latency: " + e.getMessage(), e);
+        }
     }
 
     public String obterArquivo(String relativePath) throws IOException {

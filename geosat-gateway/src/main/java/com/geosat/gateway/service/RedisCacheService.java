@@ -1,5 +1,6 @@
 package com.geosat.gateway.service;
 
+import com.geosat.gateway.metrics.RbmcMetrics;
 import org.springframework.data.redis.core.HashOperations;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
@@ -13,11 +14,13 @@ public class RedisCacheService {
 
     private final RedisTemplate<String, Object> redisTemplate;
     private final HashOperations<String, String, Object> hashOps;
+    private final RbmcMetrics metrics;
     private static final String PREFIX = "rbmc:meta:";
 
-    public RedisCacheService(RedisTemplate<String, Object> redisTemplate) {
+    public RedisCacheService(RedisTemplate<String, Object> redisTemplate, RbmcMetrics metrics) {
         this.redisTemplate = redisTemplate;
         this.hashOps = redisTemplate.opsForHash();
+        this.metrics = metrics;
     }
 
     public void putMetadata(String estacao, Map<String,Object> data, Duration ttl) {
@@ -29,7 +32,11 @@ public class RedisCacheService {
     public Optional<Map<String,Object>> getMetadata(String estacao) {
         String key = key(estacao);
         Map<String,Object> all = hashOps.entries(key);
-        if (all == null || all.isEmpty()) return Optional.empty();
+        if (all == null || all.isEmpty()) {
+            metrics.recordCacheMiss();
+            return Optional.empty();
+        }
+        metrics.recordCacheHit();
         return Optional.of(all);
     }
 
