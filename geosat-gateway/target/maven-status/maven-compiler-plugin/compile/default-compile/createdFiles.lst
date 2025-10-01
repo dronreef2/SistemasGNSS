@@ -6,14 +6,14 @@ com/geosat/gateway/service/RedisCacheService.class
 com/geosat/gateway/model/SnrSampleDTO.class
 com/geosat/gateway/model/RbmcArquivoDTO.class
 com/geosat/gateway/service/RbmcService.class
-com/geosat/gateway/config/HttpClientConfig.class
 com/geosat/gateway/model/SnrSerieDTO.class
+com/geosat/gateway/config/HttpClientConfig.class
 com/geosat/gateway/service/CircuitBreakerStateService$1.class
 com/geosat/gateway/model/EstacaoDTO.class
 com/geosat/gateway/controller/GlobalExceptionHandler.class
 com/geosat/gateway/config/RedisConfig.class
-com/geosat/gateway/config/Http2ClientConfig.class
 com/geosat/gateway/model/MetadadosEstacaoDTO.class
+com/geosat/gateway/config/Http2ClientConfig.class
 com/geosat/gateway/model/ErrorResponse.class
 com/geosat/gateway/client/RbmcHttpClient.class
 com/geosat/gateway/GeosatGatewayApplication.class
