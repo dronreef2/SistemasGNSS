@@ -1,5 +1,6 @@
 package com.geosat.gateway.client;
 
+import com.geosat.gateway.metrics.RbmcMetrics;
 import org.apache.hc.client5.http.impl.classic.CloseableHttpClient;
 import org.apache.hc.client5.http.classic.methods.HttpGet;
 import org.apache.hc.core5.http.HttpStatus;
@@ -38,11 +39,13 @@ public class RbmcHttpClient {
     private final Counter requestsTotal;
     private final Counter retriesTotal;
     private final Timer latencyTimer;
+    private final RbmcMetrics rbmcMetrics;
 
     public RbmcHttpClient(CloseableHttpClient httpClient,
                           RetryRegistry retryRegistry,
                           CircuitBreakerRegistry circuitBreakerRegistry,
                           MeterRegistry meterRegistry,
+                          RbmcMetrics rbmcMetrics,
                           @Value("${rbmc.base-url:https://servicodados.ibge.gov.br/api/v1/rbmc}") String baseUrl) {
         this.httpClient = httpClient;
         this.baseUrl = baseUrl;
@@ -53,6 +56,7 @@ public class RbmcHttpClient {
         this.latencyTimer = Timer.builder("rbmc.requests.latency_seconds")
                 .description("Latência das chamadas RBMC")
                 .register(meterRegistry);
+        this.rbmcMetrics = rbmcMetrics;
         // Eventos de retry incrementam contador
         this.retry.getEventPublisher().onRetry(ev -> this.retriesTotal.increment());
         // Gauge para estado do circuit breaker
@@ -61,7 +65,15 @@ public class RbmcHttpClient {
 
     public String obterRelatorio(String estacao) throws IOException {
         String url = baseUrl + "/relatorio/" + estacao.toLowerCase();
-        return executeWithResilience(url);
+        Timer stationTimer = rbmcMetrics.getStationLatencyTimer(estacao.toUpperCase());
+        try {
+            return stationTimer.recordCallable(() -> executeWithResilience(url));
+        } catch (Exception e) {
+            if (e instanceof IOException ioe) {
+                throw ioe;
+            }
+            throw new IOException("Falha ao obter relatório: " + e.getMessage(), e);
+        }
     }
 
     public String obterArquivo(String relativePath) throws IOException {
