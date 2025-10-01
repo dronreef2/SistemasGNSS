@@ -1,7 +1,0 @@
-/home/runner/work/SistemasGNSS/SistemasGNSS/geosat-gateway/src/test/java/com/geosat/gateway/controller/EstacaoControllerTest.java
-/home/runner/work/SistemasGNSS/SistemasGNSS/geosat-gateway/src/test/java/com/geosat/gateway/RedisFallbackIntegrationTest.java
-/home/runner/work/SistemasGNSS/SistemasGNSS/geosat-gateway/src/test/java/com/geosat/gateway/RbmcControllerTest.java
-/home/runner/work/SistemasGNSS/SistemasGNSS/geosat-gateway/src/test/java/com/geosat/gateway/client/RbmcHttpClientRetryTest.java
-/home/runner/work/SistemasGNSS/SistemasGNSS/geosat-gateway/src/test/java/com/geosat/gateway/RbmcAdditionalEndpointsControllerTest.java
-/home/runner/work/SistemasGNSS/SistemasGNSS/geosat-gateway/src/test/java/com/geosat/gateway/client/RbmcHttpClientCircuitBreakerTest.java
-/home/runner/work/SistemasGNSS/SistemasGNSS/geosat-gateway/src/test/java/com/geosat/gateway/controller/RbmcControllerRetryAfterTest.java

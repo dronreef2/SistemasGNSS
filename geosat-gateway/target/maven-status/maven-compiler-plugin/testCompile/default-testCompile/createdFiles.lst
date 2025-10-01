@@ -1,6 +1,0 @@
-com/geosat/gateway/RedisFallbackIntegrationTest.class
-com/geosat/gateway/controller/EstacaoControllerTest.class
-com/geosat/gateway/RbmcControllerTest.class
-com/geosat/gateway/client/RbmcHttpClientCircuitBreakerTest.class
-com/geosat/gateway/controller/RbmcControllerRetryAfterTest.class
-com/geosat/gateway/client/RbmcHttpClientRetryTest.class
