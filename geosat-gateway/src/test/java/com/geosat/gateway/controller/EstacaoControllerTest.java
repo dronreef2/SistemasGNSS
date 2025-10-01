@@ -36,4 +36,16 @@ class EstacaoControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.samples").isArray());
     }
+
+    @Test
+    void geojsonEstacoesOk() throws Exception {
+        mockMvc.perform(get("/api/v1/estacoes/geojson"))
+                .andExpect(status().isOk())
+                .andExpect(header().string("Content-Type", "application/json"))
+                .andExpect(jsonPath("$.type").value("FeatureCollection"))
+                .andExpect(jsonPath("$.features").isArray())
+                .andExpect(jsonPath("$.features[0].type").value("Feature"))
+                .andExpect(jsonPath("$.features[0].geometry.type").value("Point"))
+                .andExpect(jsonPath("$.features[0].properties.codigo").exists());
+    }
 }

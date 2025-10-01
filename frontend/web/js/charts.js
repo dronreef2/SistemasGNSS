@@ -6,6 +6,34 @@ export function renderCharts(snrData, posData){
   const snrSamples = (snrData?.samples||[]).slice(0,300);
   const posSamples = (posData?.samples||[]).slice(0,300);
 
+  // Se não há dados, mostrar mensagem
+  if (snrSamples.length === 0 && posSamples.length === 0) {
+    destroyCharts();
+    ctx1.style.display = 'none';
+    ctx2.style.display = 'none';
+    
+    const panel = document.querySelector('.panel');
+    let noDataMsg = panel.querySelector('.no-data-message');
+    if (!noDataMsg) {
+      noDataMsg = document.createElement('div');
+      noDataMsg.className = 'no-data-message';
+      noDataMsg.style.textAlign = 'center';
+      noDataMsg.style.padding = '2rem';
+      noDataMsg.style.color = '#6b7280';
+      panel.appendChild(noDataMsg);
+    }
+    noDataMsg.textContent = 'Nenhum dado disponível para a data selecionada';
+    return;
+  }
+
+  // Remover mensagem de "sem dados" se existir
+  const noDataMsg = document.querySelector('.no-data-message');
+  if (noDataMsg) {
+    noDataMsg.remove();
+  }
+  ctx1.style.display = 'block';
+  ctx2.style.display = 'block';
+
   const snrLabels = snrSamples.map(s=> new Date(s.epoch).toLocaleTimeString());
   const snrValues = snrSamples.map(s=> s.snr || 0);
 
@@ -37,5 +65,22 @@ export function renderCharts(snrData, posData){
     posChart.data.datasets[0].data = latValues;
     posChart.data.datasets[1].data = lonValues;
     posChart.update();
+  }
+}
+
+// Função para reconstruir gráficos (Fase 6)
+export function rebuildCharts(estacao, ano, dia) {
+  destroyCharts();
+  // Esta função será chamada via loadSeries() quando dados mudarem
+}
+
+function destroyCharts() {
+  if (snrChart) {
+    snrChart.destroy();
+    snrChart = null;
+  }
+  if (posChart) {
+    posChart.destroy();
+    posChart = null;
   }
 }
