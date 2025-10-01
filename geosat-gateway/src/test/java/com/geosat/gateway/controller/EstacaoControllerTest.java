@@ -24,6 +24,18 @@ class EstacaoControllerTest {
     }
 
     @Test
+    void geojsonOk() throws Exception {
+        mockMvc.perform(get("/api/v1/estacoes/geojson"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.type").value("FeatureCollection"))
+                .andExpect(jsonPath("$.features").isArray())
+                .andExpect(jsonPath("$.features[0].type").value("Feature"))
+                .andExpect(jsonPath("$.features[0].geometry.type").value("Point"))
+                .andExpect(jsonPath("$.features[0].geometry.coordinates").isArray())
+                .andExpect(jsonPath("$.features[0].properties.codigo").exists());
+    }
+
+    @Test
     void snrSerieOk() throws Exception {
         mockMvc.perform(get("/api/v1/estacoes/ALAR/snr?ano=2025&dia=200&max=50"))
                 .andExpect(status().isOk())
