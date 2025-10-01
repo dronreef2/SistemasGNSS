@@ -1,14 +1,17 @@
 package com.geosat.gateway.controller;
 
+import com.geosat.gateway.dto.RbmcSeriesRequest;
 import com.geosat.gateway.model.RbmcRelatorioDTO;
 import com.geosat.gateway.model.RbmcFallbackResponse;
 import com.geosat.gateway.model.RbmcArquivoDTO;
 import com.geosat.gateway.service.RbmcService;
 import com.geosat.gateway.service.CircuitBreakerStateService;
+import jakarta.validation.Valid;
 import jakarta.validation.constraints.Pattern;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;

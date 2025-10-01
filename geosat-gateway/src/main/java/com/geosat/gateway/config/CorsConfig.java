@@ -13,12 +13,12 @@ public class CorsConfig {
     @Bean
     public CorsFilter corsFilter(){
         CorsConfiguration c = new CorsConfiguration();
-        c.setAllowedOrigins(List.of("http://localhost:8080", "http://localhost:5173", "http://127.0.0.1:8080"));
-        c.setAllowedMethods(List.of("GET","OPTIONS"));
+        c.setAllowedOriginPatterns(List.of("*"));
+        c.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
         c.setAllowedHeaders(List.of("*"));
-        c.setAllowCredentials(false);
+        c.setAllowCredentials(true);
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
-        source.registerCorsConfiguration("/**", c);
+        source.registerCorsConfiguration("/api/**", c);
         return new CorsFilter(source);
     }
 }

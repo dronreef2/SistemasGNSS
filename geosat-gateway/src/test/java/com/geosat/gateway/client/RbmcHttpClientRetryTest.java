@@ -4,6 +4,7 @@ import io.github.resilience4j.circuitbreaker.CircuitBreakerRegistry;
 import io.github.resilience4j.retry.RetryRegistry;
 import org.apache.hc.client5.http.classic.methods.HttpGet;
 import org.apache.hc.client5.http.impl.classic.CloseableHttpClient;
+import org.apache.hc.core5.http.io.HttpClientResponseHandler;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
@@ -52,6 +53,6 @@ class RbmcHttpClientRetryTest {
                 .hasMessageContaining("Falha simulada");
 
     // Espera 4 tentativas (max-attempts=4)
-    Mockito.verify(httpClient, times(4)).execute(any(HttpGet.class));
+    Mockito.verify(httpClient, times(4)).execute(any(HttpGet.class), any());
     }
 }

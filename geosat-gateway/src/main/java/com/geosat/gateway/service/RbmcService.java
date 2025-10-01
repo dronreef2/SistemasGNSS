@@ -5,6 +5,7 @@ import com.geosat.gateway.model.RbmcFallbackResponse;
 import com.geosat.gateway.model.RbmcArquivoDTO;
 import com.geosat.gateway.model.RbmcRelatorioDTO;
 import io.github.resilience4j.circuitbreaker.CallNotPermittedException;
+import io.micrometer.core.instrument.MeterRegistry;
 import org.springframework.stereotype.Service;
 
 import java.time.Instant;
@@ -19,14 +20,17 @@ public class RbmcService {
 
     private final RbmcHttpClient client;
     private final RedisCacheService cacheService;
+    private final MeterRegistry meterRegistry;
 
-    public RbmcService(RbmcHttpClient client, RedisCacheService cacheService) {
+    public RbmcService(RbmcHttpClient client, RedisCacheService cacheService, MeterRegistry meterRegistry) {
         this.client = client;
         this.cacheService = cacheService;
+        this.meterRegistry = meterRegistry;
     }
 
     public Object obterRelatorio(String estacao) {
         String upper = estacao.toUpperCase();
+        long start = System.nanoTime();
         try {
             client.obterRelatorio(upper); // Ignorando conteúdo binário por enquanto
             RbmcRelatorioDTO dto = new RbmcRelatorioDTO(
@@ -42,10 +46,16 @@ public class RbmcService {
                     "tipo", dto.tipo(),
                     "ultimaAtualizacao", dto.ultimaAtualizacao().toString()
             ), Duration.ofHours(12));
+            meterRegistry.counter("rbmc.requests.total", "method", "obterRelatorio", "status", "success").increment();
+            meterRegistry.timer("rbmc.requests.duration", "method", "obterRelatorio").record(System.nanoTime() - start, java.util.concurrent.TimeUnit.NANOSECONDS);
             return dto;
         } catch (CallNotPermittedException cbOpen) {
+            meterRegistry.counter("rbmc.requests.total", "method", "obterRelatorio", "status", "circuit_breaker").increment();
+            meterRegistry.counter("rbmc.fallback.total").increment();
             return fallback(upper, "Circuit breaker aberto — a estação foi tomar um café ☕");
         } catch (Exception e) {
+            meterRegistry.counter("rbmc.requests.total", "method", "obterRelatorio", "status", "error").increment();
+            meterRegistry.counter("rbmc.fallback.total").increment();
             return fallback(upper, "Falha temporária — a estação tirou uma soneca 🚀");
         }
     }
