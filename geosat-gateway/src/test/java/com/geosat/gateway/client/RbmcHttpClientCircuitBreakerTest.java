@@ -5,6 +5,7 @@ import io.github.resilience4j.circuitbreaker.CircuitBreaker;
 import io.github.resilience4j.retry.RetryRegistry;
 import org.apache.hc.client5.http.classic.methods.HttpGet;
 import org.apache.hc.client5.http.impl.classic.CloseableHttpClient;
+import org.apache.hc.core5.http.io.HttpClientResponseHandler;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
@@ -44,7 +45,7 @@ class RbmcHttpClientCircuitBreakerTest {
 
     @BeforeEach
     void setup() throws Exception {
-        Mockito.when(httpClient.execute(any(HttpGet.class)))
+        Mockito.when(httpClient.execute(any(HttpGet.class), any(HttpClientResponseHandler.class)))
                 .thenThrow(new IOException("Falha simulada"));
     }
 
