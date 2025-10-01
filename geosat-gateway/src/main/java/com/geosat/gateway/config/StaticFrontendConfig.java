@@ -1,8 +1,8 @@
 package com.geosat.gateway.config;
 
 import org.springframework.context.annotation.Configuration;
-import org.springframework.core.io.ClassPathResource;
 import org.springframework.http.CacheControl;
+import org.springframework.lang.NonNull;
 import org.springframework.web.servlet.config.annotation.ResourceHandlerRegistry;
 import org.springframework.web.servlet.config.annotation.ViewControllerRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
@@ -24,7 +24,7 @@ public class StaticFrontendConfig implements WebMvcConfigurer {
     }
 
     @Override
-    public void addResourceHandlers(ResourceHandlerRegistry registry) {
+    public void addResourceHandlers(@NonNull ResourceHandlerRegistry registry) {
         Path dir = frontendDir().toAbsolutePath();
         String location = dir.toUri().toString();
         registry.addResourceHandler("/app/**")
@@ -33,7 +33,7 @@ public class StaticFrontendConfig implements WebMvcConfigurer {
     }
 
     @Override
-    public void addViewControllers(ViewControllerRegistry registry) {
+    public void addViewControllers(@NonNull ViewControllerRegistry registry) {
         registry.addViewController("/app").setViewName("forward:/app/index.html");
     }
 }

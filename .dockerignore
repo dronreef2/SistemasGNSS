@@ -1,0 +1,49 @@
+# Git
+.git
+.gitignore
+.github
+
+# IDE
+.vscode
+.idea
+*.iml
+
+# Build artifacts
+**/target/
+**/build/
+**/.mvn/
+**/node_modules/
+
+# Docs
+docs/
+*.md
+README.md
+LICENSE
+
+# Test files
+**/*Test.java
+**/test-results/
+
+# Docker
+Dockerfile
+docker-compose.yml
+.dockerignore
+
+# Scripts
+scripts/
+
+# Observability configs (copiado separadamente se necessário)
+observability/
+
+# Logs
+*.log
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Temp files
+*.tmp
+*.bak
+*.swp
+*~

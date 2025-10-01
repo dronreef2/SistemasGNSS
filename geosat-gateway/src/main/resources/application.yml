@@ -11,7 +11,19 @@ management:
   endpoints:
     web:
       exposure:
-        include: health,info
+        include: health,info,prometheus,metrics
+  metrics:
+    export:
+      prometheus:
+        enabled: true
+    tags:
+      application: geosat-gateway
+      environment: ${SPRING_PROFILES_ACTIVE:development}
+  endpoint:
+    health:
+      show-details: when-authorized
+    prometheus:
+      enabled: true
 
 logging:
   level:
@@ -37,4 +49,18 @@ rbmc:
   circuitBreaker:
     waitOpenSeconds: 30  # Usado para header Retry-After quando o CB está OPEN
 
-# (removido bloco duplicado spring)
+---
+# Perfil Docker
+spring:
+  config:
+    activate:
+      on-profile: docker
+  data:
+    redis:
+      host: redis
+      port: 6379
+
+logging:
+  level:
+    root: INFO
+    com.geosat.gateway: DEBUG

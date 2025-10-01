@@ -2,9 +2,8 @@ package com.geosat.gateway.client;
 
 import org.apache.hc.client5.http.impl.classic.CloseableHttpClient;
 import org.apache.hc.client5.http.classic.methods.HttpGet;
-import org.apache.hc.client5.http.impl.classic.CloseableHttpResponse;
 import org.apache.hc.core5.http.HttpStatus;
-import org.apache.hc.core5.http.impl.bootstrap.HttpAsyncRequester;
+import org.apache.hc.core5.http.io.HttpClientResponseHandler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -33,7 +32,6 @@ public class RbmcHttpClient {
     private static final Logger log = LoggerFactory.getLogger(RbmcHttpClient.class);
 
     private final CloseableHttpClient httpClient;
-    private final HttpAsyncRequester h2AsyncRequester; // reservado futura expansão
     private final String baseUrl;
     private final CircuitBreaker circuitBreaker;
     private final Retry retry;
@@ -42,13 +40,11 @@ public class RbmcHttpClient {
     private final Timer latencyTimer;
 
     public RbmcHttpClient(CloseableHttpClient httpClient,
-                          HttpAsyncRequester h2AsyncRequester,
                           RetryRegistry retryRegistry,
                           CircuitBreakerRegistry circuitBreakerRegistry,
                           MeterRegistry meterRegistry,
                           @Value("${rbmc.base-url:https://servicodados.ibge.gov.br/api/v1/rbmc}") String baseUrl) {
         this.httpClient = httpClient;
-    this.h2AsyncRequester = h2AsyncRequester; // pode ser null se bean não carregado
         this.baseUrl = baseUrl;
         this.retry = retryRegistry.retry("rbmcClient");
         this.circuitBreaker = circuitBreakerRegistry.circuitBreaker("rbmcClient");
@@ -93,11 +89,11 @@ public class RbmcHttpClient {
 
     protected String rawExecute(String url) throws IOException {
         long start = System.nanoTime();
-        // Estratégia: tentar requester assíncrono se disponível; fallback para cliente clássico.
-        // (Fase 1) Mantemos uso sincrono clássico; o requester H2 será usado em futura fase de streaming.
         HttpGet get = new HttpGet(url);
         requestsTotal.increment();
-        try (CloseableHttpResponse response = httpClient.execute(get)) {
+        
+        // ResponseHandler approach (não-deprecado)
+        HttpClientResponseHandler<String> responseHandler = response -> {
             int status = response.getCode();
             if (status != HttpStatus.SC_OK) {
                 throw new IOException("HTTP status " + status + " para " + url);
@@ -106,6 +102,10 @@ public class RbmcHttpClient {
                 byte[] bytes = is.readAllBytes();
                 return new String(bytes, StandardCharsets.ISO_8859_1);
             }
+        };
+        
+        try {
+            return httpClient.execute(get, responseHandler);
         } catch (IOException e) {
             long elapsedMs = Duration.ofNanos(System.nanoTime() - start).toMillis();
             log.warn("falha_http url={} elapsedMs={} msg={}", url, elapsedMs, e.getMessage());
