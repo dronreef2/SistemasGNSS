@@ -1,0 +1,62 @@
+@startuml Architecture
+!theme plain
+skinparam backgroundColor #ffffff
+skinparam componentStyle rectangle
+skinparam shadowing false
+
+actor User as user
+rectangle "Browser / Frontend\n(HTML/JS/Leaflet/Chart.js)" as frontend
+rectangle "GeoSat Gateway\n(Spring Boot)" as gateway {
+  component "Controller Layer" as controller
+  component "Service Layer" as service
+  component "RBMC HttpClient" as httpclient
+  component "CircuitBreaker\nState Service" as cbstate
+  component "Cache Layer" as cache
+  component "Metrics & Logging" as metrics
+}
+cloud "IBGE RBMC APIs" as rbmc {
+  component "Relatorio PDF" as pdf
+  component "RINEX2" as rinex2
+  component "RINEX3 1s" as rinex3_1s
+  component "RINEX3 15s" as rinex3_15s
+  component "Orbitas" as orbitas
+}
+database "Redis" as redis
+component "Prometheus" as prom
+component "Grafana" as grafana
+
+user --> frontend
+frontend --> gateway
+user --> gateway
+
+gateway --> rbmc
+rbmc --> gateway
+
+gateway <--> redis
+
+prom --> gateway : scrape /actuator/prometheus
+
+grafana --> prom
+
+note right of gateway
+  Resilience4j: Retry + CircuitBreaker
+  Fallback to Redis cache
+  Retry-After header when CB OPEN
+  Structured JSON Logs
+  Metrics: rbmc.requests.*, retries, latency
+  Decimation adaptativa (series SNR/posicoes)
+end note
+
+note bottom of redis
+  TTL 6-12h for metadata/links
+  Fallback cache on circuit breaker open
+end note
+
+note bottom of frontend
+  Mapa Leaflet + estacoes interativas
+  Graficos Chart.js (SNR, posicoes)
+  Selecao de data (ano/dia juliano)
+  OpenAPI documented endpoints
+end note
+
+@enduml
