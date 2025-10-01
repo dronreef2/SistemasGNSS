@@ -1,10 +1,13 @@
 package com.geosat.gateway.controller;
 
+import com.geosat.gateway.dto.RbmcSeriesRequest;
 import com.geosat.gateway.model.*;
 import io.micrometer.core.instrument.MeterRegistry;
+import jakarta.validation.Valid;
 import org.springframework.http.CacheControl;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.Instant;
@@ -14,6 +17,7 @@ import java.util.concurrent.ThreadLocalRandom;
 
 @RestController
 @RequestMapping("/api/v1/estacoes")
+@Validated
 public class EstacaoController {
 
     private static final List<EstacaoDTO> ESTACOES = List.of(
@@ -74,10 +78,15 @@ public class EstacaoController {
     }
 
     @GetMapping("/{codigo}/snr")
-    public ResponseEntity<SnrSerieDTO> snr(@PathVariable("codigo") String codigo,
-                           @RequestParam(name = "ano") int ano,
-                           @RequestParam(name = "dia") int dia,
-                           @RequestParam(name = "max", required = false, defaultValue = "300") int max){
+    public ResponseEntity<SnrSerieDTO> snr(
+            @PathVariable("codigo") String codigo,
+            @Valid @ModelAttribute RbmcSeriesRequest request) {
+        
+        // Usar valores do request validado
+        int ano = request.getAno();
+        int dia = request.getDia();
+        int max = request.getMax() != null ? request.getMax() : 300;
+        
         int rawPoints = 1440; // 1 ponto por minuto do dia
         List<SnrSampleDTO> raw = new ArrayList<>(rawPoints);
         Instant base = Instant.parse(ano + "-01-01T00:00:00Z").plusSeconds((long)(dia-1) * 86400L);
@@ -96,10 +105,15 @@ public class EstacaoController {
     }
 
     @GetMapping("/{codigo}/posicoes")
-    public ResponseEntity<PosicaoSerieDTO> posicoes(@PathVariable("codigo") String codigo,
-                                    @RequestParam(name = "ano") int ano,
-                                    @RequestParam(name = "dia") int dia,
-                                    @RequestParam(name = "max", required = false, defaultValue = "300") int max){
+    public ResponseEntity<PosicaoSerieDTO> posicoes(
+            @PathVariable("codigo") String codigo,
+            @Valid @ModelAttribute RbmcSeriesRequest request) {
+        
+        // Usar valores do request validado
+        int ano = request.getAno();
+        int dia = request.getDia();
+        int max = request.getMax() != null ? request.getMax() : 300;
+        
         int rawPoints = 2880; // 30s step
         EstacaoDTO baseEst = ESTACOES.stream().filter(e->e.codigo().equalsIgnoreCase(codigo)).findFirst().orElse(ESTACOES.get(0));
         double lat = baseEst.latitude();
