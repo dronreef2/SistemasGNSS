@@ -1,6 +1,7 @@
 import { state, on, setEstacao, setData } from './state.js';
 import { getMetadados, getSnr, getPosicoes } from './apiClient.js';
 import { renderCharts } from './charts.js';
+import { DateUtils, UrlUtils, debounce } from './utils.js';
 
 const estacaoSelect = document.getElementById('estacaoSelect');
 const anoInput = document.getElementById('anoInput');
@@ -10,19 +11,46 @@ const btnOntem = document.getElementById('btnOntem');
 const btnRelatorio = document.getElementById('btnRelatorio');
 const btnRinex2 = document.getElementById('btnRinex2');
 const metadadosEl = document.getElementById('metadados');
+const dateValidationEl = document.getElementById('dateValidation');
 
-function pad(n,l){ return String(n).padStart(l,'0'); }
+function validateAndUpdateDate() {
+  const year = anoInput.value;
+  const day = diaInput.value;
+  
+  if (!year || !day) {
+    dateValidationEl.textContent = '';
+    dateValidationEl.className = 'validation-message';
+    updateDownloadButtons();
+    return false;
+  }
+  
+  const validation = DateUtils.validateDateInput(year, day);
+  if (validation.valid) {
+    dateValidationEl.textContent = '✓ Data válida';
+    dateValidationEl.className = 'validation-message valid';
+    setData({ ano: parseInt(year), dia: parseInt(day) });
+    updateDownloadButtons();
+    return true;
+  } else {
+    dateValidationEl.textContent = validation.errors[0];
+    dateValidationEl.className = 'validation-message';
+    updateDownloadButtons();
+    return false;
+  }
+}
 
 function updateDownloadButtons(){
   const { estacaoSelecionada, data:{ano,dia} } = state;
-  const ok = estacaoSelecionada && ano && dia;
+  const dateValid = ano && dia && DateUtils.validateDateInput(ano, dia).valid;
+  
   btnRelatorio.disabled = !estacaoSelecionada;
-  btnRinex2.disabled = !ok;
+  btnRinex2.disabled = !(estacaoSelecionada && dateValid);
+  
   if(estacaoSelecionada){
-    btnRelatorio.onclick = () => window.open(`/api/v1/rbmc/${estacaoSelecionada}/relatorio`, '_blank');
+    btnRelatorio.onclick = () => UrlUtils.openInNewTab(UrlUtils.buildReportUrl(estacaoSelecionada));
   }
-  if(ok){
-    btnRinex2.onclick = () => window.open(`/api/v1/rbmc/${estacaoSelecionada}/rinex2/${ano}/${pad(dia,3)}`, '_blank');
+  if(estacaoSelecionada && dateValid){
+    btnRinex2.onclick = () => UrlUtils.openInNewTab(UrlUtils.buildRinex2Url(estacaoSelecionada, ano, dia));
   }
 }
 
@@ -73,10 +101,7 @@ async function loadSeries(){
 }
 
 function validateAndSetDate(){
-  const ano = parseInt(anoInput.value,10);
-  const dia = parseInt(diaInput.value,10);
-  if(!ano || !dia || dia<1 || dia>366 || ano<1995) return;
-  setData(ano, dia);
+  return validateAndUpdateDate();
 }
 
 export function initUI(){
@@ -85,24 +110,70 @@ export function initUI(){
       list.map(e=>`<option value='${e.codigo}'>${e.codigo} - ${e.nome||''}</option>`).join('');
   });
   estacaoSelect.addEventListener('change', e => setEstacao(e.target.value));
-  anoInput.addEventListener('change', validateAndSetDate);
-  diaInput.addEventListener('change', validateAndSetDate);
+  
+  // Usar debounce para otimizar validação de entrada
+  const debouncedValidation = debounce(validateAndUpdateDate, 300);
+  anoInput.addEventListener('input', debouncedValidation);
+  diaInput.addEventListener('input', debouncedValidation);
+  
   btnHoje.addEventListener('click', () => {
-    const d = new Date();
-    const start = new Date(d.getFullYear(),0,1);
-    const diff = Math.floor((d - start)/86400000)+1;
-    anoInput.value = d.getFullYear();
-    diaInput.value = diff;
-    validateAndSetDate();
+    const today = DateUtils.getTodayJulian();
+    anoInput.value = today.year;
+    diaInput.value = today.day;
+    validateAndUpdateDate();
   });
+  
   btnOntem.addEventListener('click', () => {
-    const d = new Date(Date.now()-86400000);
-    const start = new Date(d.getFullYear(),0,1);
-    const diff = Math.floor((d - start)/86400000)+1;
-    anoInput.value = d.getFullYear();
-    diaInput.value = diff;
-    validateAndSetDate();
+    const yesterday = DateUtils.getYesterdayJulian();
+    anoInput.value = yesterday.year;
+    diaInput.value = yesterday.day;
+    validateAndUpdateDate();
   });
-  on('estacao:changed', () => { loadMetadados(); updateDownloadButtons(); loadSeries(); });
-  on('data:changed', () => { updateDownloadButtons(); loadSeries(); });
+  
+  on('estacao:changed', () => { loadMetadados(); updateDownloadButtons(); loadSeries(); updateMetadata(); });
+  on('data:changed', () => { updateDownloadButtons(); loadSeries(); updateMetadata(); });
+}
+
+// Função para atualizar painel de metadados (Fase 4)
+async function updateMetadata() {
+  const metadataDiv = document.getElementById('metadata');
+  if (!metadataDiv || !state.estacao) return;
+
+  try {
+    // Encontrar coordenadas da estação
+    const coords = state.estacoes.find(e => e.name === state.estacao);
+    if (coords && state.ano && state.diaAno) {
+      const selectedDate = DateUtils.dayOfYearToDate(parseInt(state.ano), parseInt(state.diaAno));
+      
+      metadataDiv.innerHTML = `
+        <div class="metadata-content">
+          <div class="metadata-item">
+            <span class="metadata-label">Estação:</span>
+            <span class="metadata-value">${state.estacao}</span>
+          </div>
+          <div class="metadata-item">
+            <span class="metadata-label">Coordenadas:</span>
+            <span class="metadata-value">${coords.lat.toFixed(6)}°, ${coords.lon.toFixed(6)}°</span>
+          </div>
+          <div class="metadata-item">
+            <span class="metadata-label">Data:</span>
+            <span class="metadata-value">${selectedDate.toLocaleDateString('pt-BR')}</span>
+          </div>
+          <div class="metadata-item">
+            <span class="metadata-label">Dia do Ano:</span>
+            <span class="metadata-value">${state.diaAno.toString().padStart(3, '0')}</span>
+          </div>
+          <div class="metadata-item">
+            <span class="metadata-label">Status:</span>
+            <span class="metadata-value status-online">🟢 Online</span>
+          </div>
+        </div>
+      `;
+    }
+  } catch (error) {
+    console.error('Erro ao atualizar metadados:', error);
+    if (metadataDiv) {
+      metadataDiv.innerHTML = '<div class="error">❌ Erro ao carregar metadados</div>';
+    }
+  }
 }

@@ -156,9 +156,107 @@ SistemasGNSS/
 
 ## 🧪 Testes
 ```bash
+# Todos os testes
 mvn -q -pl geosat-gateway test
+
+# Apenas testes unitários
+mvn -q -pl geosat-gateway test -Dtest=*Test
+
+# Apenas testes de integração
+mvn -q -pl geosat-gateway verify -Pintegration-tests
 ```
 Testes de integração usam Redis via Testcontainers.
+
+## 🐳 Docker & Compose
+
+### Build e Run Local
+```bash
+# Via Docker Compose (recomendado)
+docker-compose up -d
+
+# Acessos:
+# - App: http://localhost:8080/app
+# - API: http://localhost:8080/api/v1/
+# - Prometheus: http://localhost:9090
+# - Grafana: http://localhost:3000 (admin/geosat123)
+
+# Logs
+docker-compose logs -f geosat-gateway
+
+# Parar tudo
+docker-compose down
+```
+
+### Build Manual Docker
+```bash
+# Build da imagem
+docker build -t geosat-gateway:latest .
+
+# Run standalone
+docker run -p 8080:8080 \
+  -e REDIS_HOST=host.docker.internal \
+  geosat-gateway:latest
+```
+
+## 🚀 CI/CD
+
+Pipeline automatizado via GitHub Actions:
+- ✅ Build & Test em todas as branches
+- ✅ Code Quality Checks
+- ✅ Security Scanning (Trivy)
+- ✅ Docker Image Build
+- ✅ Integration Tests com Redis
+- 🔜 Deploy automatizado
+
+## 📊 Observabilidade
+
+### Métricas Disponíveis
+| Nome | Tipo | Descrição |
+|------|------|-----------|
+| `rbmc.requests.total` | counter | Tentativas HTTP totais |
+| `rbmc.requests.latency_seconds` | timer | Latência por chamada |
+| `rbmc.retries.total` | counter | Quantidade de retries |
+| `rbmc.circuitbreaker.state` | gauge | Estado do CircuitBreaker (0=CLOSED, 1=OPEN, 2=HALF_OPEN) |
+
+### Endpoints de Monitoramento
+- `/actuator/health` - Health check
+- `/actuator/info` - Informações da aplicação
+- `/actuator/prometheus` - Métricas formato Prometheus
+- `/actuator/metrics` - Métricas detalhadas
+
+### Grafana Dashboards
+Acesse http://localhost:3000 após `docker-compose up`:
+- **Overview**: Taxa de requests, latência, erros
+- **Resilience**: Estado do Circuit Breaker, retries
+- **Cache**: Hit rate, tempo de resposta Redis
+- **JVM**: Memória, GC, threads
+
+## 🔧 Melhorias Implementadas (v0.2.0)
+
+### ✅ Correções Críticas
+- ✅ Removido código deprecado do HttpClient
+- ✅ Corrigido resource leak no teste Redis Testcontainer
+- ✅ Removido imports não utilizados
+- ✅ Adicionado annotations @NonNull em overrides
+
+### ✅ Infraestrutura
+- ✅ Dockerfile multi-stage otimizado (~180MB)
+- ✅ docker-compose.yml completo (app + redis + prometheus + grafana)
+- ✅ GitHub Actions CI/CD pipeline
+- ✅ Health checks em todos os containers
+
+### ✅ Observabilidade
+- ✅ Prometheus endpoint habilitado
+- ✅ Métricas customizadas documentadas
+- ✅ Grafana datasources pré-configurados
+- ✅ Logs estruturados por perfil
+
+### ✅ Configuração
+- ✅ Perfil Docker separado
+- ✅ Variáveis de ambiente documentadas
+- ✅ Timeouts configuráveis
+
+## 🧪 Testes
 
 ## ADRs (Resumo)
 | ID | Decisão | Status |

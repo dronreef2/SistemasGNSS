@@ -1,0 +1,25 @@
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+  external_labels:
+    cluster: 'geosat-local'
+    environment: 'development'
+
+scrape_configs:
+  - job_name: 'geosat-gateway'
+    metrics_path: '/actuator/prometheus'
+    static_configs:
+      - targets: ['geosat-gateway:8080']
+        labels:
+          application: 'geosat-gateway'
+          service: 'api'
+    scrape_interval: 10s
+    scrape_timeout: 5s
+
+  - job_name: 'prometheus'
+    static_configs:
+      - targets: ['localhost:9090']
+
+  - job_name: 'redis'
+    static_configs:
+      - targets: ['redis:6379']

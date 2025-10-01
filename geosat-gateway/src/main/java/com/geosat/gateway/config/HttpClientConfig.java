@@ -18,7 +18,7 @@ public class HttpClientConfig {
             @Value("${rbmc.user-agent:GeoSatGateway/0.1}") String userAgent
     ) {
         RequestConfig requestConfig = RequestConfig.custom()
-                .setConnectTimeout(Timeout.ofMilliseconds(connectMs))
+                .setConnectionRequestTimeout(Timeout.ofMilliseconds(connectMs))
                 .setResponseTimeout(Timeout.ofMilliseconds(responseMs))
                 .build();
 
