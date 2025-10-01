@@ -2,9 +2,13 @@ package com.geosat.gateway.controller;
 
 import com.geosat.gateway.model.*;
 import io.micrometer.core.instrument.MeterRegistry;
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.Pattern;
 import org.springframework.http.CacheControl;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.Instant;
@@ -14,6 +18,7 @@ import java.util.concurrent.ThreadLocalRandom;
 
 @RestController
 @RequestMapping("/api/v1/estacoes")
+@Validated
 public class EstacaoController {
 
     private static final List<EstacaoDTO> ESTACOES = List.of(
@@ -65,7 +70,8 @@ public class EstacaoController {
     }
 
     @GetMapping("/{codigo}/metadados")
-    public MetadadosEstacaoDTO metadados(@PathVariable("codigo") String codigo){
+    public MetadadosEstacaoDTO metadados(
+            @PathVariable("codigo") @Pattern(regexp = "^[A-Za-z]{4}$", message = "Código da estação deve ter 4 letras") String codigo){
         // Placeholder: última observação 3–900 minutos atrás de forma pseudo-randômica
         long offsetMin = (Math.abs(Objects.hash(codigo)) % 900) + 3; // entre 3 e 903 min
         Instant ultima = Instant.now().minusSeconds(offsetMin * 60);
@@ -74,10 +80,11 @@ public class EstacaoController {
     }
 
     @GetMapping("/{codigo}/snr")
-    public ResponseEntity<SnrSerieDTO> snr(@PathVariable("codigo") String codigo,
-                           @RequestParam(name = "ano") int ano,
-                           @RequestParam(name = "dia") int dia,
-                           @RequestParam(name = "max", required = false, defaultValue = "300") int max){
+    public ResponseEntity<SnrSerieDTO> snr(
+            @PathVariable("codigo") @Pattern(regexp = "^[A-Za-z]{4}$", message = "Código da estação deve ter 4 letras") String codigo,
+            @RequestParam(name = "ano") @Min(value = 2000, message = "Ano mínimo: 2000") @Max(value = 2100, message = "Ano máximo: 2100") int ano,
+            @RequestParam(name = "dia") @Min(value = 1, message = "Dia mínimo: 1") @Max(value = 366, message = "Dia máximo: 366") int dia,
+            @RequestParam(name = "max", required = false, defaultValue = "300") @Min(value = 1, message = "Max mínimo: 1") @Max(value = 10000, message = "Max máximo: 10000") int max){
         int rawPoints = 1440; // 1 ponto por minuto do dia
         List<SnrSampleDTO> raw = new ArrayList<>(rawPoints);
         Instant base = Instant.parse(ano + "-01-01T00:00:00Z").plusSeconds((long)(dia-1) * 86400L);
@@ -96,10 +103,11 @@ public class EstacaoController {
     }
 
     @GetMapping("/{codigo}/posicoes")
-    public ResponseEntity<PosicaoSerieDTO> posicoes(@PathVariable("codigo") String codigo,
-                                    @RequestParam(name = "ano") int ano,
-                                    @RequestParam(name = "dia") int dia,
-                                    @RequestParam(name = "max", required = false, defaultValue = "300") int max){
+    public ResponseEntity<PosicaoSerieDTO> posicoes(
+            @PathVariable("codigo") @Pattern(regexp = "^[A-Za-z]{4}$", message = "Código da estação deve ter 4 letras") String codigo,
+            @RequestParam(name = "ano") @Min(value = 2000, message = "Ano mínimo: 2000") @Max(value = 2100, message = "Ano máximo: 2100") int ano,
+            @RequestParam(name = "dia") @Min(value = 1, message = "Dia mínimo: 1") @Max(value = 366, message = "Dia máximo: 366") int dia,
+            @RequestParam(name = "max", required = false, defaultValue = "300") @Min(value = 1, message = "Max mínimo: 1") @Max(value = 10000, message = "Max máximo: 10000") int max){
         int rawPoints = 2880; // 30s step
         EstacaoDTO baseEst = ESTACOES.stream().filter(e->e.codigo().equalsIgnoreCase(codigo)).findFirst().orElse(ESTACOES.get(0));
         double lat = baseEst.latitude();
