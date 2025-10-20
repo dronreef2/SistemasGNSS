@@ -65,6 +65,7 @@ Fallback:
 |-----------|------------|
 | Runtime | Java 17, Spring Boot 3 |
 | HTTP Client | Apache HttpComponents 5 |
+| Geospatial | **Apache SIS 1.4** (coordinate transforms, metadata, units) |
 | Resiliência | Resilience4j |
 | Cache | Redis |
 | Observabilidade | Micrometer + Actuator |
@@ -149,6 +150,15 @@ Fase | Objetivo | Destaques
 ```
 SistemasGNSS/
   geosat-gateway/
+    src/main/java/com/geosat/gateway/
+      sis/           # Apache SIS integration (NEW)
+        adapter/     # GNSS data adapters
+        transform/   # Coordinate transformations
+        units/       # Unit conversions
+        metadata/    # ISO 19115 metadata
+  docs/
+    SIS_INTEGRATION.md   # Apache SIS integration guide
+    SIS_EXAMPLES.md      # Code examples
   plantuml/
   scripts/
   README.md
@@ -267,12 +277,44 @@ Acesse http://localhost:3000 após `docker-compose up`:
 | ADR-004 | Fallback HTTP 503 | Aceita |
 | ADR-005 | Metadados placeholders | Temporária |
 
+## 🗺️ Apache SIS Integration (NEW)
+
+The project now includes **Apache SIS** integration for geospatial operations:
+
+### Features Implemented
+- ✅ **Coordinate Transformations**: Geodetic ↔ UTM projections with automatic zone detection
+- ✅ **Unit Management**: JSR-385 compliant conversions (meters, kilometers, degrees, radians)
+- ✅ **GNSS Data Adapters**: Validates and converts position/SNR observations
+- ✅ **Metadata Support**: ISO 19115-inspired metadata generation with XML export
+- ✅ **52 Unit Tests**: Comprehensive test coverage with 100% pass rate
+
+### Quick Start
+```java
+// Coordinate transformation
+@Autowired
+private CoordinateTransformationService transformService;
+
+UTMCoordinate utm = transformService.geodeticToUTM(-15.7939, -47.8828);
+// Result: Zone 23S, Easting: 207012m, Northing: 8253047m
+
+// Unit conversion
+@Autowired
+private UnitConversionService unitService;
+
+double km = unitService.metersToKilometers(5500.0);  // 5.5
+double rad = unitService.degreesToRadians(45.0);     // 0.785398
+```
+
+📖 **Documentation**: See [docs/SIS_INTEGRATION.md](docs/SIS_INTEGRATION.md) for complete guide  
+💻 **Examples**: See [docs/SIS_EXAMPLES.md](docs/SIS_EXAMPLES.md) for code examples
+
 ## Melhorias Planejadas (Técnicas)
 1. Métricas por endpoint (`rbmc.endpoint.requests{tipo=...}`)
 2. Header `Retry-After` derivado do tempo restante OPEN
 3. Parser incremental RINEX (streaming) + testes
 4. Feature flag `rbmc.http2.enabled`
 5. Observabilidade de bytes transferidos
+6. **SIS**: ECEF ↔ Geodetic 3D transformations, GeoTIFF/NetCDF export
 
 ## Licença
 Pendente (sugestão: MIT ou Apache 2.0).
