@@ -1,0 +1,40 @@
+plugins {
+    id 'java'
+}
+
+group = 'com.dronreef.sistemasgnss'
+version = '0.1.0-SNAPSHOT'
+
+java {
+    sourceCompatibility = JavaVersion.VERSION_11
+    targetCompatibility = JavaVersion.VERSION_11
+}
+
+repositories {
+    mavenCentral()
+}
+
+ext {
+    sisVersion = '1.5' // ajuste se necessário
+    geoapiVersion = '3.0.2'
+}
+
+dependencies {
+    implementation "org.apache.sis.core:sis-referencing:${sisVersion}"
+    implementation "org.apache.sis.storage:sis-storage:${sisVersion}"
+    implementation "org.apache.sis.storage:sis-geotiff:${sisVersion}"
+    implementation "org.apache.sis.storage:sis-netcdf:${sisVersion}"
+    implementation "org.apache.sis.core:sis-utility:${sisVersion}"
+    implementation "org.apache.sis.core:sis-feature:${sisVersion}"
+    implementation "org.apache.sis.core:sis-metadata:${sisVersion}"
+    implementation "org.opengis:geoapi:${geoapiVersion}"
+
+    // JSR-385 implementation (opcional)
+    implementation 'tech.units:indriya:2.1'
+
+    testImplementation 'junit:junit:4.13.2'
+}
+
+tasks.withType(JavaCompile) {
+    options.encoding = 'UTF-8'
+}
