@@ -13,7 +13,7 @@ import io.github.resilience4j.circuitbreaker.CircuitBreakerRegistry;
 import io.github.resilience4j.retry.Retry;
 import io.github.resilience4j.retry.RetryRegistry;
 import io.github.resilience4j.decorators.Decorators;
-import io.github.resilience4j.core.CheckedFunction0;
+import io.github.resilience4j.core.functions.CheckedSupplier;
 import java.util.concurrent.Callable;
 import io.micrometer.core.instrument.Counter;
 import io.micrometer.core.instrument.MeterRegistry;
@@ -75,16 +75,16 @@ public class RbmcHttpClient {
 
     protected String executeWithResilience(String url) throws IOException {
         // Use checked decorators so checked exceptions (IOException) are preserved
-        CheckedFunction0<String> rawCall = () -> rawExecute(url);
-        CheckedFunction0<String> decorated = Decorators.ofCheckedSupplier(rawCall)
+        CheckedSupplier<String> rawCall = () -> rawExecute(url);
+        CheckedSupplier<String> decorated = Decorators.ofCheckedSupplier(rawCall)
                 .withCircuitBreaker(circuitBreaker)
                 .withRetry(retry)
-                .decorateCheckedSupplier();
+                .decorate();
 
         try {
             Callable<String> callable = () -> {
                 try {
-                    return decorated.apply();
+                    return decorated.get();
                 } catch (Throwable t) {
                     if (t instanceof Exception) {
                         throw (Exception) t;
