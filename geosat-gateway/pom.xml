@@ -25,6 +25,13 @@
                 <type>pom</type>
                 <scope>import</scope>
             </dependency>
+            <dependency>
+                <groupId>io.github.resilience4j</groupId>
+                <artifactId>resilience4j-bom</artifactId>
+                <version>2.2.0</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
         </dependencies>
     </dependencyManagement>
 
@@ -52,18 +59,15 @@
         <dependency>
             <groupId>io.github.resilience4j</groupId>
             <artifactId>resilience4j-spring-boot3</artifactId>
-            <version>2.2.0</version>
         </dependency>
         <!-- Explicit resilience4j modules needed by RbmcHttpClient -->
         <dependency>
             <groupId>io.github.resilience4j</groupId>
             <artifactId>resilience4j-core</artifactId>
-            <version>2.2.0</version>
         </dependency>
         <dependency>
             <groupId>io.github.resilience4j</groupId>
-            <artifactId>resilience4j-decorators</artifactId>
-            <version>2.1.0</version>
+            <artifactId>resilience4j-all</artifactId>
         </dependency>
         <!-- Micrometer Prometheus (PR futuro) -->
         <dependency>
