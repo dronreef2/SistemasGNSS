@@ -22,7 +22,7 @@ public class RbmcService {
     private final RedisCacheService cacheService;
     private final MeterRegistry meterRegistry;
 
-    public RbmcService(RbmcHttpClient client, RedisCacheService cacheService, MeterRegistry meterRegistry) {
+    public RbmcService(RbmcHttpClient client, @Autowired(required = false) RedisCacheService cacheService, MeterRegistry meterRegistry) {
         this.client = client;
         this.cacheService = cacheService;
         this.meterRegistry = meterRegistry;
