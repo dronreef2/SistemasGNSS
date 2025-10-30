@@ -26,7 +26,6 @@ management:
         enabled: true
     prometheus:
       enabled: true
-      enabled: true
 
 logging:
   pattern:
@@ -68,4 +67,5 @@ spring:
 logging:
   level:
     root: INFO
-    com.geosat.gateway: DEBUG
+    com.geosat
+
