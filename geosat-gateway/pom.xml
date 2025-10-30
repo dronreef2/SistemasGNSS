@@ -11,7 +11,7 @@
         <java.version>17</java.version>
         <spring.boot.version>3.2.5</spring.boot.version>
         <maven.compiler.release>${java.version}</maven.compiler.release>
-        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <project.build.sourceEncoding>UTF-8</project.build.source.encoding>
         <testcontainers.version>1.19.7</testcontainers.version>
         <apache.sis.version>1.4</apache.sis.version>
     </properties>
@@ -166,6 +166,16 @@
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-maven-plugin</artifactId>
                 <version>${spring.boot.version}</version>
+                <executions>
+                    <execution>
+                        <goals>
+                            <goal>repackage</goal>
+                        </goals>
+                    </execution>
+                </executions>
+                <configuration>
+                    <mainClass>com.geosat.gateway.GeosatGatewayApplication</mainClass>
+                </configuration>
             </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
