@@ -163,12 +163,15 @@ public class RbmcService {
     }
 
     private RbmcFallbackResponse fallback(String estacao, String mensagem) {
-        return new RbmcFallbackResponse(
-                estacao,
-                "indisponivel",
-                mensagem,
-                Instant.now(),
-                cacheService.getMetadata(estacao).orElse(Map.of())
-        );
-    }
+    Map<String, Object> cached = cacheService != null 
+        ? cacheService.getMetadata(estacao).orElse(Map.of())
+        : Map.of();
+    return new RbmcFallbackResponse(
+            estacao,
+            "indisponivel",
+            mensagem,
+            Instant.now(),
+            cached
+    );
+}
 }
