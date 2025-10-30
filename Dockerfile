@@ -24,7 +24,7 @@ RUN apk add --no-cache curl
 COPY --from=builder /build/target/*.jar app.jar
 
 # Configurar JVM para o container (exemplo)
-ENV JAVA_OPTS="-XX:+UseContainerSupport -XX:MaxRAMPercentage=75.0 -XX:+UseG1GC"
+ENV JAVA_OPTS=-XX:+UseContainerSupport -XX:MaxRAMPercentage=75.0 -XX:+UseG1GC
 
 # Expor porta
 EXPOSE 8080
@@ -38,4 +38,4 @@ RUN addgroup -S geosat && adduser -S geosat -G geosat
 WORKDIR /app
 USER geosat
 
-ENTRYPOINT ["sh", "-c", "java $JAVA_OPTS -jar /app.jar"]
+ENTRYPOINT ["sh", "-c", "exec java $JAVA_OPTS -jar /app.jar"]
