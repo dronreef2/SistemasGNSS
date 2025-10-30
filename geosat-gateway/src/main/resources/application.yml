@@ -21,7 +21,7 @@ management:
       environment: ${SPRING_PROFILES_ACTIVE:development}
   endpoint:
     health:
-      show-details: when-authorized
+      show-details: always
     prometheus:
       enabled: true
 
