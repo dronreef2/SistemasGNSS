@@ -6,6 +6,7 @@ import com.geosat.gateway.model.RbmcArquivoDTO;
 import com.geosat.gateway.model.RbmcRelatorioDTO;
 import io.github.resilience4j.circuitbreaker.CallNotPermittedException;
 import io.micrometer.core.instrument.MeterRegistry;
+import org.springframework.beans.factory.annotation.Autowired;  // ← ADICIONE ESTA LINHA
 import org.springframework.stereotype.Service;
 
 import java.time.Instant;
