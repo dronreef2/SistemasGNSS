@@ -22,6 +22,9 @@ management:
         enabled: true
     prometheus:
       enabled: true
+  health:
+    redis:
+      enabled: false
 
 logging:
   pattern:
