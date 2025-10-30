@@ -30,9 +30,8 @@ RUN addgroup -S geosat && adduser -S geosat -G geosat
 WORKDIR /app
 USER geosat
 
-# Configurar JVM para o container (padrões ajustáveis por env)
-# NOTE: define JAVA_OPTS without surrounding quotes so expansion preserves leading '-'
-ENV JAVA_OPTS=-XX:+UseContainerSupport -XX:MaxRAMPercentage=75.0 -XX:+UseG1GC
+# Configurar JVM padrão (mantemos uma variável para sobrescrita se quiser)
+ENV JAVA_OPTS_OVERRIDE=""
 
 # Porta que a aplicação usa
 EXPOSE 8080
@@ -42,5 +41,5 @@ EXPOSE 8080
 HEALTHCHECK --interval=30s --timeout=5s --start-period=120s --retries=5 \
   CMD curl -fsS --max-time 4 http://127.0.0.1:8080/actuator/health || exit 1
 
-# Entrada padrão: usar exec para que java receba os argumentos corretamente
-ENTRYPOINT ["sh", "-c", "exec java $JAVA_OPTS -jar /app/app.jar"]
+# Entrada padrão (exec form) — passa flags da JVM explicitamente para evitar parsing ambíguo
+ENTRYPOINT ["java", "-XX:+UseContainerSupport", "-XX:MaxRAMPercentage=75.0", "-XX:+UseG1GC", "-jar", "/app/app.jar"]
