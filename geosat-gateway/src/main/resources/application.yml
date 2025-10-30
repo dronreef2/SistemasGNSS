@@ -3,10 +3,6 @@ server:
 spring:
   application:
     name: geosat-gateway
-  data:
-    redis:
-      host: ${REDIS_HOST:localhost}
-      port: ${REDIS_PORT:6379}
 management:
   endpoints:
     web:
@@ -51,7 +47,7 @@ resilience4j:
 
 rbmc:
   circuitBreaker:
-    waitOpenSeconds: 30  # Usado para header Retry-After quando o CB está OPEN
+    waitOpenSeconds: 30
 
 ---
 # Perfil Docker
@@ -59,13 +55,8 @@ spring:
   config:
     activate:
       on-profile: docker
-  data:
-    redis:
-      host: redis
-      port: 6379
 
 logging:
   level:
     root: INFO
-    com.geosat
-
+    com.geosat.gateway: DEBUG
