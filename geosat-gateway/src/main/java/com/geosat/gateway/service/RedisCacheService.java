@@ -10,7 +10,7 @@ import java.util.Map;
 import java.util.Optional;
 
 @Service
-@ConditionalOnProperty(name = "redis.enabled", havingValue = "true", matchIfMissing = true)
+@ConditionalOnProperty(name = "redis.enabled", havingValue = "true", matchIfMissing = false)
 public class RedisCacheService {
 
     private final RedisTemplate<String, Object> redisTemplate;
