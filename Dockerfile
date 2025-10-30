@@ -36,8 +36,7 @@ ENV JAVA_OPTS_OVERRIDE=""
 # Porta que a aplicação usa
 EXPOSE 8080
 
-# Healthcheck: usar curl e dar a aplicação mais tempo para iniciar
-# - aumenta timeout/start-period e falha com códigos não-2xx
+# Healthcheck continua inalterado
 HEALTHCHECK --interval=30s --timeout=5s --start-period=120s --retries=5 \
   CMD curl -fsS --max-time 4 http://127.0.0.1:8080/actuator/health || exit 1
 
