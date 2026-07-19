@@ -1,0 +1,1977 @@
+================================================================================
+  BLUEPRINT COMPLETO — Sistemas GNSS 3D
+  Projeto: Visualização Orbital em Tempo Real
+  Stack: React 19 + TypeScript + Vite + Three.js + satellite.js
+  Deploy: GitHub Pages (frontend-only)
+================================================================================
+
+
+================================================================================
+  📄 package.json
+  📝 Configuração de dependências e scripts
+  📏 927 bytes | 37 linhas
+================================================================================
+
+{
+  "name": "sistemas-gnss-3d",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc -b && vite build",
+    "lint": "eslint .",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0",
+    "three": "^0.175.0",
+    "@react-three/fiber": "^9.0.0",
+    "@react-three/drei": "^10.0.0",
+    "satellite.js": "^5.0.0",
+    "zustand": "^5.0.0",
+    "lucide-react": "^0.475.0",
+    "tailwindcss": "^4.0.0",
+    "@tailwindcss/vite": "^4.0.0"
+  },
+  "devDependencies": {
+    "@types/react": "^19.0.0",
+    "@types/react-dom": "^19.0.0",
+    "@types/three": "^0.175.0",
+    "@vitejs/plugin-react": "^4.4.0",
+    "typescript": "~5.8.0",
+    "vite": "^6.3.0",
+    "eslint": "^9.0.0",
+    "@eslint/js": "^9.0.0",
+    "eslint-plugin-react-hooks": "^5.0.0",
+    "eslint-plugin-react-refresh": "^0.4.0",
+    "globals": "^16.0.0"
+  }
+}
+
+
+
+================================================================================
+  📄 vite.config.ts
+  📝 Configuração do Vite com base path para GitHub Pages
+  📏 206 bytes | 8 linhas
+================================================================================
+
+import { defineConfig } from 'vite'
+import react from '@vitejs/plugin-react'
+import tailwindcss from '@tailwindcss/vite'
+
+export default defineConfig({
+  plugins: [react(), tailwindcss()],
+  base: './',
+})
+
+
+
+================================================================================
+  📄 tsconfig.json
+  📝 Configuração do TypeScript
+  📏 511 bytes | 20 linhas
+================================================================================
+
+{
+  "compilerOptions": {
+    "target": "ES2020",
+    "useDefineForClassFields": true,
+    "lib": ["ES2020", "DOM", "DOM.Iterable"],
+    "module": "ESNext",
+    "skipLibCheck": true,
+    "moduleResolution": "bundler",
+    "allowImportingTsExtensions": true,
+    "isolatedModules": true,
+    "moduleDetection": "force",
+    "noEmit": true,
+    "jsx": "react-jsx",
+    "strict": true,
+    "noUnusedLocals": false,
+    "noUnusedParameters": false,
+    "noFallthroughCasesInSwitch": true
+  },
+  "include": ["src"]
+}
+
+
+
+================================================================================
+  📄 tsconfig.app.json
+  📝 TSConfig da aplicação
+  📏 511 bytes | 20 linhas
+================================================================================
+
+{
+  "compilerOptions": {
+    "target": "ES2020",
+    "useDefineForClassFields": true,
+    "lib": ["ES2020", "DOM", "DOM.Iterable"],
+    "module": "ESNext",
+    "skipLibCheck": true,
+    "moduleResolution": "bundler",
+    "allowImportingTsExtensions": true,
+    "isolatedModules": true,
+    "moduleDetection": "force",
+    "noEmit": true,
+    "jsx": "react-jsx",
+    "strict": true,
+    "noUnusedLocals": false,
+    "noUnusedParameters": false,
+    "noFallthroughCasesInSwitch": true
+  },
+  "include": ["src"]
+}
+
+
+
+================================================================================
+  📄 tsconfig.node.json
+  📝 TSConfig do Vite
+  📏 438 bytes | 18 linhas
+================================================================================
+
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "lib": ["ES2023"],
+    "module": "ESNext",
+    "skipLibCheck": true,
+    "moduleResolution": "bundler",
+    "allowImportingTsExtensions": true,
+    "isolatedModules": true,
+    "moduleDetection": "force",
+    "noEmit": true,
+    "strict": true,
+    "noUnusedLocals": false,
+    "noUnusedParameters": false,
+    "noFallthroughCasesInSwitch": true
+  },
+  "include": ["vite.config.ts"]
+}
+
+
+
+================================================================================
+  📄 index.html
+  📝 HTML de entrada
+  📏 683 bytes | 16 linhas
+================================================================================
+
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Sistemas GNSS — Visualização Orbital 3D</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>
+
+
+
+================================================================================
+  📄 .gitignore
+  📝 Arquivos ignorados pelo Git
+  📏 61 bytes | 7 linhas
+================================================================================
+
+node_modules
+dist
+dist-ssr
+*.local
+.env
+.env.local
+.DS_Store
+
+
+
+================================================================================
+  📄 eslint.config.js
+  📝 Configuração do ESLint
+  📏 734 bytes | 28 linhas
+================================================================================
+
+import js from '@eslint/js'
+import globals from 'globals'
+import reactHooks from 'eslint-plugin-react-hooks'
+import reactRefresh from 'eslint-plugin-react-refresh'
+import tseslint from 'typescript-eslint'
+
+export default tseslint.config(
+  { ignores: ['dist'] },
+  {
+    extends: [js.configs.recommended, ...tseslint.configs.recommended],
+    files: ['**/*.{ts,tsx}'],
+    languageOptions: {
+      ecmaVersion: 2020,
+      globals: globals.browser,
+    },
+    plugins: {
+      'react-hooks': reactHooks,
+      'react-refresh': reactRefresh,
+    },
+    rules: {
+      ...reactHooks.configs.recommended.rules,
+      'react-refresh/only-export-components': [
+        'warn',
+        { allowConstantExport: true },
+      ],
+    },
+  },
+)
+
+
+
+================================================================================
+  📄 vercel.json
+  📝 Configuração do Vercel
+  📏 90 bytes | 5 linhas
+================================================================================
+
+{
+  "buildCommand": "npm run build",
+  "outputDirectory": "dist",
+  "framework": "vite"
+}
+
+
+
+================================================================================
+  📄 netlify.toml
+  📝 Configuração do Netlify
+  📏 120 bytes | 8 linhas
+================================================================================
+
+[build]
+  command = "npm run build"
+  publish = "dist"
+
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
+
+
+
+================================================================================
+  📄 .github/workflows/deploy.yml
+  📝 Workflow GitHub Actions para deploy automático
+  📏 929 bytes | 49 linhas
+================================================================================
+
+name: Deploy to GitHub Pages
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: 'pages'
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build
+        run: npm run build
+
+      - name: Setup Pages
+        uses: actions/configure-pages@v4
+
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: './dist'
+
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
+
+
+
+================================================================================
+  ❌ ARQUIVO NÃO ENCONTRADO: src/index.css
+================================================================================
+
+
+================================================================================
+  ❌ ARQUIVO NÃO ENCONTRADO: src/main.tsx
+================================================================================
+
+
+================================================================================
+  ❌ ARQUIVO NÃO ENCONTRADO: src/App.tsx
+================================================================================
+
+
+================================================================================
+  📄 src/types/index.ts
+  📝 Tipos TypeScript + configurações de grupo
+  📏 2,054 bytes | 87 linhas
+================================================================================
+
+export interface SatelliteData {
+  name: string;
+  noradId: string;
+  tleLine1: string;
+  tleLine2: string;
+  group: SatelliteGroup;
+  satrec: import('satellite.js').SatRec | null;
+}
+
+export type SatelliteGroup =
+  | 'GPS'
+  | 'GLONASS'
+  | 'Galileo'
+  | 'BeiDou'
+  | 'Starlink'
+  | 'ISS';
+
+export interface SatellitePosition {
+  x: number;
+  y: number;
+  z: number;
+  lat: number;
+  lon: number;
+  alt: number;
+  velocity: number;
+  period: number;
+  inclination: number;
+}
+
+export interface GroupConfig {
+  key: SatelliteGroup;
+  label: string;
+  color: string;
+  celestrakUrl: string;
+  glowColor: string;
+}
+
+export const GROUP_CONFIGS: GroupConfig[] = [
+  {
+    key: 'GPS',
+    label: 'GPS (NAVSTAR)',
+    color: '#00E5FF',
+    glowColor: '#00E5FF',
+    celestrakUrl: 'https://celestrak.org/NORAD/elements/gp.php?GROUP=gps-ops&FORMAT=TLE',
+  },
+  {
+    key: 'GLONASS',
+    label: 'GLONASS',
+    color: '#FF5252',
+    glowColor: '#FF5252',
+    celestrakUrl: 'https://celestrak.org/NORAD/elements/gp.php?GROUP=glo-ops&FORMAT=TLE',
+  },
+  {
+    key: 'Galileo',
+    label: 'Galileo',
+    color: '#69F0AE',
+    glowColor: '#69F0AE',
+    celestrakUrl: 'https://celestrak.org/NORAD/elements/gp.php?GROUP=galileo&FORMAT=TLE',
+  },
+  {
+    key: 'BeiDou',
+    label: 'BeiDou',
+    color: '#FFD740',
+    glowColor: '#FFD740',
+    celestrakUrl: 'https://celestrak.org/NORAD/elements/gp.php?GROUP=beidou&FORMAT=TLE',
+  },
+  {
+    key: 'Starlink',
+    label: 'Starlink',
+    color: '#E040FB',
+    glowColor: '#E040FB',
+    celestrakUrl: 'https://celestrak.org/NORAD/elements/gp.php?GROUP=starlink&FORMAT=TLE',
+  },
+  {
+    key: 'ISS',
+    label: 'ISS',
+    color: '#FFFFFF',
+    glowColor: '#FFFFFF',
+    celestrakUrl: 'https://celestrak.org/NORAD/elements/gp.php?CATNR=25544&FORMAT=TLE',
+  },
+];
+
+export const GROUP_CONFIG_MAP: Record<SatelliteGroup, GroupConfig> =
+  GROUP_CONFIGS.reduce((acc, g) => ({ ...acc, [g.key]: g }), {} as Record<SatelliteGroup, GroupConfig>);
+
+export const EARTH_RADIUS_KM = 6371;
+export const SCALE = 1 / 1000; // 1 unidade = 1000 km
+
+
+
+================================================================================
+  📄 src/lib/store.ts
+  📝 Estado global com Zustand
+  📏 2,339 bytes | 83 linhas
+================================================================================
+
+import { create } from 'zustand';
+import type { SatelliteData, SatelliteGroup, SatellitePosition } from '../types';
+
+interface AppState {
+  // Dados
+  satellites: SatelliteData[];
+  loading: boolean;
+  error: string | null;
+  lastUpdated: Date | null;
+
+  // Filtros
+  activeGroups: Set<SatelliteGroup>;
+  searchQuery: string;
+
+  // Tempo
+  simulationTime: Date;
+  isPlaying: boolean;
+  speedMultiplier: number;
+
+  // Seleção
+  selectedSatellite: SatelliteData | null;
+  selectedPosition: SatellitePosition | null;
+
+  // Ações
+  setSatellites: (sats: SatelliteData[]) => void;
+  setLoading: (v: boolean) => void;
+  setError: (e: string | null) => void;
+  setLastUpdated: (d: Date) => void;
+  toggleGroup: (g: SatelliteGroup) => void;
+  setSearchQuery: (q: string) => void;
+  setSimulationTime: (d: Date) => void;
+  setIsPlaying: (v: boolean) => void;
+  setSpeedMultiplier: (s: number) => void;
+  selectSatellite: (sat: SatelliteData | null) => void;
+  setSelectedPosition: (pos: SatellitePosition | null) => void;
+  advanceTime: (deltaMs: number) => void;
+}
+
+export const useStore = create<AppState>((set) => ({
+  satellites: [],
+  loading: true,
+  error: null,
+  lastUpdated: null,
+
+  activeGroups: new Set(['GPS', 'GLONASS', 'Galileo', 'BeiDou', 'Starlink', 'ISS']),
+  searchQuery: '',
+
+  simulationTime: new Date(),
+  isPlaying: true,
+  speedMultiplier: 1,
+
+  selectedSatellite: null,
+  selectedPosition: null,
+
+  setSatellites: (sats) => set({ satellites: sats }),
+  setLoading: (v) => set({ loading: v }),
+  setError: (e) => set({ error: e }),
+  setLastUpdated: (d) => set({ lastUpdated: d }),
+
+  toggleGroup: (g) =>
+    set((state) => {
+      const next = new Set(state.activeGroups);
+      if (next.has(g)) next.delete(g);
+      else next.add(g);
+      return { activeGroups: next };
+    }),
+
+  setSearchQuery: (q) => set({ searchQuery: q }),
+
+  setSimulationTime: (d) => set({ simulationTime: d }),
+  setIsPlaying: (v) => set({ isPlaying: v }),
+  setSpeedMultiplier: (s) => set({ speedMultiplier: s }),
+
+  selectSatellite: (sat) => set({ selectedSatellite: sat, selectedPosition: null }),
+  setSelectedPosition: (pos) => set({ selectedPosition: pos }),
+
+  advanceTime: (deltaMs) =>
+    set((state) => ({
+      simulationTime: new Date(
+        state.simulationTime.getTime() + deltaMs * state.speedMultiplier
+      ),
+    })),
+}));
+
+
+
+================================================================================
+  📄 src/lib/tle.ts
+  📝 Ingestão, parse e propagação orbital SGP4
+  📏 5,495 bytes | 191 linhas
+================================================================================
+
+import * as satellite from 'satellite.js';
+import type { SatelliteData, SatelliteGroup } from '../types';
+import { GROUP_CONFIGS, EARTH_RADIUS_KM } from '../types';
+
+const CACHE_KEY = 'gnss_tle_cache_v1';
+const CACHE_TTL_MS = 2 * 60 * 60 * 1000; // 2 horas
+
+interface TleCacheEntry {
+  group: SatelliteGroup;
+  rawTle: string;
+  timestamp: number;
+  satellites: SatelliteData[];
+}
+
+interface TleCache {
+  entries: Record<string, TleCacheEntry>;
+  lastFetch: number;
+}
+
+function loadCache(): TleCache | null {
+  try {
+    const raw = localStorage.getItem(CACHE_KEY);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw) as TleCache;
+    if (Date.now() - parsed.lastFetch > CACHE_TTL_MS) return null;
+    return parsed;
+  } catch {
+    return null;
+  }
+}
+
+function saveCache(cache: TleCache) {
+  try {
+    localStorage.setItem(CACHE_KEY, JSON.stringify(cache));
+  } catch {
+    // Storage pode estar cheio — silencioso
+  }
+}
+
+function parseTle(raw: string, group: SatelliteGroup): SatelliteData[] {
+  const lines = raw.trim().split('\n').map((l) => l.trim()).filter(Boolean);
+  const sats: SatelliteData[] = [];
+
+  for (let i = 0; i < lines.length - 2; i += 3) {
+    const name = lines[i].trim();
+    const tle1 = lines[i + 1];
+    const tle2 = lines[i + 2];
+
+    if (!tle1 || !tle2 || !tle1.startsWith('1 ') || !tle2.startsWith('2 ')) continue;
+
+    let satrec: satellite.SatRec | null = null;
+    try {
+      satrec = satellite.twoline2satrec(tle1, tle2);
+    } catch {
+      continue;
+    }
+
+    const noradId = tle1.substring(2, 7).trim();
+
+    sats.push({
+      name,
+      noradId,
+      tleLine1: tle1,
+      tleLine2: tle2,
+      group,
+      satrec,
+    });
+  }
+
+  return sats;
+}
+
+export async function fetchTleGroup(group: SatelliteGroup): Promise<SatelliteData[]> {
+  const config = GROUP_CONFIGS.find((g) => g.key === group);
+  if (!config) throw new Error(`Grupo desconhecido: ${group}`);
+
+  const cache = loadCache();
+  if (cache && cache.entries[group] && Date.now() - cache.entries[group].timestamp < CACHE_TTL_MS) {
+    return cache.entries[group].satellites;
+  }
+
+  try {
+    const response = await fetch(config.celestrakUrl, { cache: 'no-store' });
+    if (!response.ok) throw new Error(`HTTP ${response.status}`);
+    const raw = await response.text();
+
+    const satellites = parseTle(raw, group);
+
+    const newCache: TleCache = cache || { entries: {}, lastFetch: Date.now() };
+    newCache.entries[group] = { group, rawTle: raw, timestamp: Date.now(), satellites };
+    newCache.lastFetch = Date.now();
+    saveCache(newCache);
+
+    return satellites;
+  } catch (err) {
+    // Fallback para cache antigo mesmo expirado
+    if (cache && cache.entries[group]) {
+      console.warn(`[TLE] Fetch falhou para ${group}, usando cache antigo.`);
+      return cache.entries[group].satellites;
+    }
+    throw err;
+  }
+}
+
+export async function fetchAllTle(): Promise<SatelliteData[]> {
+  const results = await Promise.allSettled(
+    GROUP_CONFIGS.map((g) => fetchTleGroup(g.key))
+  );
+
+  const all: SatelliteData[] = [];
+  results.forEach((r, i) => {
+    if (r.status === 'fulfilled') {
+      all.push(...r.value);
+    } else {
+      console.error(`[TLE] Falha ao carregar ${GROUP_CONFIGS[i].key}:`, r.reason);
+    }
+  });
+
+  return all;
+}
+
+export function propagateSatellite(
+  sat: SatelliteData,
+  date: Date
+): { position: { x: number; y: number; z: number }; velocity: number; gmst: number } | null {
+  if (!sat.satrec) return null;
+
+  try {
+    const positionAndVelocity = satellite.propagate(sat.satrec, date);
+    if (
+      !positionAndVelocity.position ||
+      typeof positionAndVelocity.position === 'boolean'
+    )
+      return null;
+
+    const gmst = satellite.gstime(date);
+    const positionEci = positionAndVelocity.position as satellite.EciVec3<number>;
+    const velocityEci = positionAndVelocity.velocity as satellite.EciVec3<number>;
+
+    // Converter ECI para ECEF
+    const positionEcf = satellite.eciToEcf(positionEci, gmst);
+
+    const x = positionEcf.x * SCALE;
+    const y = positionEcf.z * SCALE; // Three.js: Y é up
+    const z = -positionEcf.y * SCALE; // Three.js: Z é para frente (inverte)
+
+    const vx = velocityEci.x;
+    const vy = velocityEci.y;
+    const vz = velocityEci.z;
+    const velocity = Math.sqrt(vx * vx + vy * vy + vz * vz);
+
+    return { position: { x, y, z }, velocity, gmst };
+  } catch {
+    return null;
+  }
+}
+
+export function getGeodetic(
+  sat: SatelliteData,
+  date: Date
+): { lat: number; lon: number; alt: number; inclination: number; period: number } | null {
+  if (!sat.satrec) return null;
+
+  try {
+    const positionAndVelocity = satellite.propagate(sat.satrec, date);
+    if (
+      !positionAndVelocity.position ||
+      typeof positionAndVelocity.position === 'boolean'
+    )
+      return null;
+
+    const gmst = satellite.gstime(date);
+    const positionEci = positionAndVelocity.position as satellite.EciVec3<number>;
+    const positionGd = satellite.eciToGeodetic(positionEci, gmst);
+
+    const lat = satellite.degreesLat(positionGd.latitude);
+    const lon = satellite.degreesLong(positionGd.longitude);
+    const alt = positionGd.height;
+
+    // Inclinação e período orbitais
+    const inclination = sat.satrec.inclo ? satellite.degreesLat(sat.satrec.inclo) : 0;
+    const meanMotion = sat.satrec.no_kozai;
+    const period = meanMotion > 0 ? (2 * Math.PI) / meanMotion / 60 : 0; // minutos
+
+    return { lat, lon, alt, inclination, period };
+  } catch {
+    return null;
+  }
+}
+
+const SCALE = 1 / 1000;
+
+
+
+================================================================================
+  📄 src/components/Earth.tsx
+  📝 Terra 3D com texturas e atmosfera
+  📏 6,677 bytes | 231 linhas
+================================================================================
+
+import { useRef, useMemo } from 'react';
+import { useFrame } from '@react-three/fiber';
+import * as THREE from 'three';
+
+const EARTH_RADIUS = 6.371; // km * SCALE (1/1000)
+
+// Textura procedural de dia — gradiente oceano/continente
+function createDayTexture(): THREE.CanvasTexture {
+  const canvas = document.createElement('canvas');
+  canvas.width = 2048;
+  canvas.height = 1024;
+  const ctx = canvas.getContext('2d')!;
+
+  // Oceano base
+  const oceanGrad = ctx.createLinearGradient(0, 0, 0, canvas.height);
+  oceanGrad.addColorStop(0, '#1a3a5c');
+  oceanGrad.addColorStop(0.5, '#0d2137');
+  oceanGrad.addColorStop(1, '#1a3a5c');
+  ctx.fillStyle = oceanGrad;
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+  // Continentes simplificados (silhuetas aproximadas)
+  ctx.fillStyle = '#2d5a27';
+  // América do Sul
+  ctx.beginPath();
+  ctx.ellipse(600, 650, 180, 280, 0.2, 0, Math.PI * 2);
+  ctx.fill();
+  // América do Norte
+  ctx.beginPath();
+  ctx.ellipse(500, 350, 220, 180, -0.3, 0, Math.PI * 2);
+  ctx.fill();
+  // Europa/África
+  ctx.beginPath();
+  ctx.ellipse(1100, 450, 160, 280, 0, 0, Math.PI * 2);
+  ctx.fill();
+  // Ásia
+  ctx.beginPath();
+  ctx.ellipse(1500, 350, 300, 200, 0.1, 0, Math.PI * 2);
+  ctx.fill();
+  // Austrália
+  ctx.beginPath();
+  ctx.ellipse(1700, 750, 120, 90, 0, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Ice caps
+  ctx.fillStyle = '#e8f4f8';
+  ctx.beginPath();
+  ctx.ellipse(1000, 50, 400, 60, 0, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.beginPath();
+  ctx.ellipse(1000, 970, 350, 50, 0, 0, Math.PI * 2);
+  ctx.fill();
+
+  const tex = new THREE.CanvasTexture(canvas);
+  tex.colorSpace = THREE.SRGBColorSpace;
+  return tex;
+}
+
+// Textura de noite — city lights
+function createNightTexture(): THREE.CanvasTexture {
+  const canvas = document.createElement('canvas');
+  canvas.width = 2048;
+  canvas.height = 1024;
+  const ctx = canvas.getContext('2d')!;
+
+  ctx.fillStyle = '#000000';
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+  // Luzes de cidades (pontos aleatórios concentrados em latitudes médias)
+  for (let i = 0; i < 3000; i++) {
+    const x = Math.random() * canvas.width;
+    const y = 200 + Math.random() * 600;
+    const intensity = Math.random();
+    const r = Math.floor(255 * (0.6 + 0.4 * intensity));
+    const g = Math.floor(200 * (0.5 + 0.5 * intensity));
+    const b = Math.floor(100 * intensity);
+    ctx.fillStyle = `rgba(${r},${g},${b},${0.3 + 0.7 * intensity})`;
+    ctx.beginPath();
+    ctx.arc(x, y, 0.5 + Math.random() * 1.5, 0, Math.PI * 2);
+    ctx.fill();
+  }
+
+  const tex = new THREE.CanvasTexture(canvas);
+  tex.colorSpace = THREE.SRGBColorSpace;
+  return tex;
+}
+
+// Textura de nuvens
+function createCloudTexture(): THREE.CanvasTexture {
+  const canvas = document.createElement('canvas');
+  canvas.width = 2048;
+  canvas.height = 1024;
+  const ctx = canvas.getContext('2d')!;
+
+  ctx.fillStyle = 'rgba(0,0,0,0)';
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+  for (let i = 0; i < 200; i++) {
+    const x = Math.random() * canvas.width;
+    const y = Math.random() * canvas.height;
+    const w = 50 + Math.random() * 200;
+    const h = 20 + Math.random() * 60;
+    const alpha = 0.1 + Math.random() * 0.25;
+
+    const grad = ctx.createRadialGradient(x, y, 0, x, y, Math.max(w, h));
+    grad.addColorStop(0, `rgba(255,255,255,${alpha})`);
+    grad.addColorStop(1, 'rgba(255,255,255,0)');
+    ctx.fillStyle = grad;
+    ctx.beginPath();
+    ctx.ellipse(x, y, w, h, Math.random() * Math.PI, 0, Math.PI * 2);
+    ctx.fill();
+  }
+
+  const tex = new THREE.CanvasTexture(canvas);
+  tex.colorSpace = THREE.SRGBColorSpace;
+  return tex;
+}
+
+// Atmosfera glow shader
+const atmosphereVertexShader = `
+  varying vec3 vNormal;
+  varying vec3 vPosition;
+  void main() {
+    vNormal = normalize(normalMatrix * normal);
+    vPosition = (modelViewMatrix * vec4(position, 1.0)).xyz;
+    gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+  }
+`;
+
+const atmosphereFragmentShader = `
+  varying vec3 vNormal;
+  varying vec3 vPosition;
+  uniform vec3 glowColor;
+  uniform float intensity;
+  void main() {
+    float viewDot = 1.0 - dot(normalize(vNormal), vec3(0.0, 0.0, 1.0));
+    viewDot = pow(viewDot, 3.0);
+    float dist = length(vPosition);
+    float fade = smoothstep(15.0, 5.0, dist);
+    gl_FragColor = vec4(glowColor, viewDot * intensity * fade);
+  }
+`;
+
+export function Earth() {
+  const earthRef = useRef<THREE.Mesh>(null);
+  const cloudsRef = useRef<THREE.Mesh>(null);
+  const nightRef = useRef<THREE.Mesh>(null);
+
+  const dayTex = useMemo(() => createDayTexture(), []);
+  const nightTex = useMemo(() => createNightTexture(), []);
+  const cloudTex = useMemo(() => createCloudTexture(), []);
+
+  useFrame((_, delta) => {
+    if (cloudsRef.current) {
+      cloudsRef.current.rotation.y += delta * 0.005;
+    }
+  });
+
+  return (
+    <group>
+      {/* Terra base (dia) */}
+      <mesh ref={earthRef}>
+        <sphereGeometry args={[EARTH_RADIUS, 128, 64]} />
+        <meshStandardMaterial
+          map={dayTex}
+          roughness={0.8}
+          metalness={0.1}
+        />
+      </mesh>
+
+      {/* Camada de noite */}
+      <mesh ref={nightRef} scale={[1.005, 1.005, 1.005]}>
+        <sphereGeometry args={[EARTH_RADIUS, 128, 64]} />
+        <meshBasicMaterial
+          map={nightTex}
+          transparent
+          opacity={0.6}
+          blending={THREE.AdditiveBlending}
+          depthWrite={false}
+        />
+      </mesh>
+
+      {/* Nuvens */}
+      <mesh ref={cloudsRef} scale={[1.02, 1.02, 1.02]}>
+        <sphereGeometry args={[EARTH_RADIUS, 128, 64]} />
+        <meshStandardMaterial
+          map={cloudTex}
+          transparent
+          opacity={0.4}
+          depthWrite={false}
+          blending={THREE.NormalBlending}
+        />
+      </mesh>
+
+      {/* Atmosfera glow */}
+      <mesh scale={[1.15, 1.15, 1.15]}>
+        <sphereGeometry args={[EARTH_RADIUS, 64, 32]} />
+        <shaderMaterial
+          vertexShader={atmosphereVertexShader}
+          fragmentShader={atmosphereFragmentShader}
+          uniforms={{
+            glowColor: { value: new THREE.Color('#4da6ff') },
+            intensity: { value: 0.6 },
+          }}
+          transparent
+          side={THREE.BackSide}
+          depthWrite={false}
+          blending={THREE.AdditiveBlending}
+        />
+      </mesh>
+
+      {/* Luz ambiente sutil */}
+      <ambientLight intensity={0.15} />
+
+      {/* Sol */}
+      <directionalLight
+        position={[50, 20, 30]}
+        intensity={2.0}
+        color="#fff8e7"
+        castShadow={false}
+      />
+
+      {/* Luz de preenchimento */}
+      <directionalLight
+        position={[-30, -10, -20]}
+        intensity={0.3}
+        color="#4466aa"
+      />
+    </group>
+  );
+}
+
+
+
+================================================================================
+  📄 src/components/Stars.tsx
+  📝 Background estrelado
+  📏 1,229 bytes | 46 linhas
+================================================================================
+
+import { useMemo } from 'react';
+import * as THREE from 'three';
+
+export function Stars() {
+  const [positions, sizes] = useMemo(() => {
+    const count = 4000;
+    const pos = new Float32Array(count * 3);
+    const sz = new Float32Array(count);
+
+    for (let i = 0; i < count; i++) {
+      const r = 80 + Math.random() * 120;
+      const theta = Math.random() * Math.PI * 2;
+      const phi = Math.acos(2 * Math.random() - 1);
+
+      pos[i * 3] = r * Math.sin(phi) * Math.cos(theta);
+      pos[i * 3 + 1] = r * Math.sin(phi) * Math.sin(theta);
+      pos[i * 3 + 2] = r * Math.cos(phi);
+
+      sz[i] = 0.3 + Math.random() * 0.7;
+    }
+
+    return [pos, sz];
+  }, []);
+
+  const geometry = useMemo(() => {
+    const geo = new THREE.BufferGeometry();
+    geo.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+    geo.setAttribute('size', new THREE.BufferAttribute(sizes, 1));
+    return geo;
+  }, [positions, sizes]);
+
+  return (
+    <points>
+      <bufferGeometry attach="geometry" {...geometry} />
+      <pointsMaterial
+        attach="material"
+        color="#ffffff"
+        size={0.15}
+        transparent
+        opacity={0.8}
+        sizeAttenuation
+        depthWrite={false}
+      />
+    </points>
+  );
+}
+
+
+
+================================================================================
+  📄 src/components/Satellites.tsx
+  📝 InstancedMesh + sprites + trilhas + footprint
+  📏 8,750 bytes | 287 linhas
+================================================================================
+
+import { useRef, useMemo, useCallback } from 'react';
+import { useFrame } from '@react-three/fiber';
+import * as THREE from 'three';
+import { useStore } from '../lib/store';
+import { propagateSatellite, getGeodetic } from '../lib/tle';
+import { GROUP_CONFIG_MAP, EARTH_RADIUS_KM } from '../types';
+import type { SatelliteData, SatellitePosition } from '../types';
+
+const EARTH_RADIUS_SCENE = EARTH_RADIUS_KM / 1000;
+const SAT_SIZE = 0.04;
+const TRAIL_LENGTH = 60;
+const TRAIL_INTERVAL = 60; // segundos simulados entre pontos
+
+export function Satellites() {
+  const satellites = useStore((s) => s.satellites);
+  const activeGroups = useStore((s) => s.activeGroups);
+  const searchQuery = useStore((s) => s.searchQuery);
+  const simulationTime = useStore((s) => s.simulationTime);
+  const selectedSatellite = useStore((s) => s.selectedSatellite);
+  const selectSatellite = useStore((s) => s.selectSatellite);
+  const setSelectedPosition = useStore((s) => s.setSelectedPosition);
+
+  const meshRef = useRef<THREE.InstancedMesh>(null);
+  const trailRefs = useRef<Record<string, THREE.Line>>({});
+  const footprintRef = useRef<THREE.Mesh>(null);
+  const selectedMarkerRef = useRef<THREE.Mesh>(null);
+
+  // Filtrar satélites visíveis
+  const visibleSats = useMemo(() => {
+    const q = searchQuery.toLowerCase();
+    return satellites.filter((s) => {
+      if (!activeGroups.has(s.group)) return false;
+      if (q && !s.name.toLowerCase().includes(q) && s.noradId !== q) return false;
+      return true;
+    });
+  }, [satellites, activeGroups, searchQuery]);
+
+  // Mapa de índice para satélite
+  const satIndexMap = useMemo(() => {
+    const map = new Map<number, SatelliteData>();
+    visibleSats.forEach((sat, i) => map.set(i, sat));
+    return map;
+  }, [visibleSats]);
+
+  // Dummy para instanced mesh
+  const dummy = useMemo(() => new THREE.Object3D(), []);
+  const color = useMemo(() => new THREE.Color(), []);
+
+  // Geometria compartilhada
+  const satGeometry = useMemo(() => new THREE.SphereGeometry(SAT_SIZE, 8, 8), []);
+  const satMaterial = useMemo(
+    () =>
+      new THREE.MeshBasicMaterial({
+        color: 0xffffff,
+        transparent: true,
+        opacity: 0.9,
+      }),
+    []
+  );
+
+  // Posições atuais dos satélites (para raycasting)
+  const positionsRef = useRef<Float32Array>(new Float32Array(0));
+
+  // Atualizar posições frame a frame
+  useFrame(() => {
+    if (!meshRef.current) return;
+
+    const now = simulationTime;
+    const posArray = new Float32Array(visibleSats.length * 3);
+
+    visibleSats.forEach((sat, i) => {
+      const result = propagateSatellite(sat, now);
+      if (!result) {
+        dummy.position.set(0, -1000, 0); // esconde
+        dummy.updateMatrix();
+        meshRef.current!.setMatrixAt(i, dummy.matrix);
+        return;
+      }
+
+      const { x, y, z } = result.position;
+      posArray[i * 3] = x;
+      posArray[i * 3 + 1] = y;
+      posArray[i * 3 + 2] = z;
+
+      dummy.position.set(x, y, z);
+      dummy.updateMatrix();
+      meshRef.current!.setMatrixAt(i, dummy.matrix);
+
+      const config = GROUP_CONFIG_MAP[sat.group];
+      color.set(config.color);
+      meshRef.current!.setColorAt(i, color);
+    });
+
+    meshRef.current.instanceMatrix.needsUpdate = true;
+    if (meshRef.current.instanceColor) {
+      meshRef.current.instanceColor.needsUpdate = true;
+    }
+
+    positionsRef.current = posArray;
+
+    // Atualizar posição do satélite selecionado
+    if (selectedSatellite) {
+      const result = propagateSatellite(selectedSatellite, now);
+      if (result) {
+        const geo = getGeodetic(selectedSatellite, now);
+        if (geo) {
+          setSelectedPosition({
+            x: result.position.x,
+            y: result.position.y,
+            z: result.position.z,
+            lat: geo.lat,
+            lon: geo.lon,
+            alt: geo.alt,
+            velocity: result.velocity,
+            inclination: geo.inclination,
+            period: geo.period,
+          });
+        }
+
+        // Marker do satélite selecionado
+        if (selectedMarkerRef.current) {
+          selectedMarkerRef.current.position.set(
+            result.position.x,
+            result.position.y,
+            result.position.z
+          );
+        }
+      }
+    }
+  });
+
+  // Raycasting para seleção
+  const handlePointerDown = useCallback(
+    (event: THREE.Event) => {
+      const e = event as unknown as { instanceId?: number };
+      if (e.instanceId === undefined) return;
+      const sat = satIndexMap.get(e.instanceId);
+      if (sat) {
+        selectSatellite(sat);
+      }
+    },
+    [satIndexMap, selectSatellite]
+  );
+
+  // Gerar trilha para satélite selecionado
+  const selectedTrail = useMemo(() => {
+    if (!selectedSatellite) return null;
+
+    const points: THREE.Vector3[] = [];
+    const baseTime = simulationTime.getTime();
+
+    for (let i = 0; i < TRAIL_LENGTH; i++) {
+      const t = new Date(baseTime - i * TRAIL_INTERVAL * 1000);
+      const result = propagateSatellite(selectedSatellite, t);
+      if (result) {
+        points.push(new THREE.Vector3(result.position.x, result.position.y, result.position.z));
+      }
+    }
+
+    if (points.length < 2) return null;
+
+    const geometry = new THREE.BufferGeometry().setFromPoints(points);
+    const config = GROUP_CONFIG_MAP[selectedSatellite.group];
+
+    return (
+      <line>
+        <bufferGeometry attach="geometry" {...geometry} />
+        <lineBasicMaterial
+          attach="material"
+          color={config.color}
+          transparent
+          opacity={0.5}
+          linewidth={1}
+        />
+      </line>
+    );
+  }, [selectedSatellite, simulationTime]);
+
+  // Footprint do satélite selecionado
+  const footprint = useMemo(() => {
+    if (!selectedSatellite || !selectedSatellite.satrec) return null;
+
+    // Raio do footprint aproximado ~67 graus de ângulo de elevação mínimo
+    const altKm = 20000; // aproximação média
+    const earthRadius = EARTH_RADIUS_KM;
+    const footprintRadius = earthRadius * Math.acos(earthRadius / (earthRadius + altKm));
+    const sceneRadius = footprintRadius / 1000;
+
+    return (
+      <mesh ref={footprintRef} rotation={[-Math.PI / 2, 0, 0]}>
+        <ringGeometry args={[sceneRadius * 0.95, sceneRadius, 64]} />
+        <meshBasicMaterial
+          color={GROUP_CONFIG_MAP[selectedSatellite.group].color}
+          transparent
+          opacity={0.15}
+          side={THREE.DoubleSide}
+          depthWrite={false}
+        />
+      </mesh>
+    );
+  }, [selectedSatellite]);
+
+  return (
+    <group>
+      {/* Satélites instanciados */}
+      <instancedMesh
+        ref={meshRef}
+        args={[satGeometry, satMaterial, Math.max(visibleSats.length, 1)]}
+        onPointerDown={handlePointerDown}
+        frustumCulled={false}
+      />
+
+      {/* Glow dos satélites (pontos maiores via sprite) */}
+      {visibleSats.map((sat) => (
+        <SatelliteGlow key={sat.noradId} satellite={sat} simulationTime={simulationTime} />
+      ))}
+
+      {/* Trilha do selecionado */}
+      {selectedTrail}
+
+      {/* Footprint do selecionado */}
+      {selectedSatellite && (
+        <group>
+          {footprint}
+          <mesh ref={selectedMarkerRef}>
+            <sphereGeometry args={[SAT_SIZE * 3, 16, 16]} />
+            <meshBasicMaterial
+              color={GROUP_CONFIG_MAP[selectedSatellite.group].color}
+              transparent
+              opacity={0.3}
+            />
+          </mesh>
+        </group>
+      )}
+    </group>
+  );
+}
+
+// Componente separado para glow de cada satélite (otimizado)
+function SatelliteGlow({
+  satellite,
+  simulationTime,
+}: {
+  satellite: SatelliteData;
+  simulationTime: Date;
+}) {
+  const ref = useRef<THREE.Sprite>(null);
+  const config = GROUP_CONFIG_MAP[satellite.group];
+
+  const texture = useMemo(() => {
+    const canvas = document.createElement('canvas');
+    canvas.width = 64;
+    canvas.height = 64;
+    const ctx = canvas.getContext('2d')!;
+
+    const grad = ctx.createRadialGradient(32, 32, 0, 32, 32, 32);
+    grad.addColorStop(0, config.glowColor + 'FF');
+    grad.addColorStop(0.3, config.glowColor + '88');
+    grad.addColorStop(1, config.glowColor + '00');
+    ctx.fillStyle = grad;
+    ctx.fillRect(0, 0, 64, 64);
+
+    const tex = new THREE.CanvasTexture(canvas);
+    tex.colorSpace = THREE.SRGBColorSpace;
+    return tex;
+  }, [config.glowColor]);
+
+  useFrame(() => {
+    if (!ref.current) return;
+    const result = propagateSatellite(satellite, simulationTime);
+    if (result) {
+      ref.current.position.set(result.position.x, result.position.y, result.position.z);
+    }
+  });
+
+  return (
+    <sprite ref={ref} scale={[0.3, 0.3, 0.3]}>
+      <spriteMaterial
+        map={texture}
+        transparent
+        opacity={0.8}
+        blending={THREE.AdditiveBlending}
+        depthWrite={false}
+      />
+    </sprite>
+  );
+}
+
+
+
+================================================================================
+  📄 src/components/Scene.tsx
+  📝 Canvas R3F + loop de simulação temporal
+  📏 1,418 bytes | 56 linhas
+================================================================================
+
+import { useRef, useEffect } from 'react';
+import { Canvas, useFrame } from '@react-three/fiber';
+import { OrbitControls } from '@react-three/drei';
+import { Earth } from './Earth';
+import { Satellites } from './Satellites';
+import { Stars } from './Stars';
+import { useStore } from '../lib/store';
+import * as THREE from 'three';
+
+function SceneContent() {
+  const isPlaying = useStore((s) => s.isPlaying);
+  const speedMultiplier = useStore((s) => s.speedMultiplier);
+  const advanceTime = useStore((s) => s.advanceTime);
+  const lastTimeRef = useRef<number>(0);
+
+  useFrame((_, delta) => {
+    if (!isPlaying) return;
+    // Avançar tempo de simulação
+    const simDeltaMs = delta * 1000 * speedMultiplier;
+    advanceTime(simDeltaMs);
+  });
+
+  return (
+    <>
+      <ambientLight intensity={0.05} />
+      <Earth />
+      <Satellites />
+      <Stars />
+      <OrbitControls
+        enablePan={false}
+        minDistance={8}
+        maxDistance={60}
+        autoRotate
+        autoRotateSpeed={0.1}
+        enableDamping
+        dampingFactor={0.05}
+      />
+    </>
+  );
+}
+
+export function Scene() {
+  return (
+    <Canvas
+      camera={{ position: [15, 8, 15], fov: 45, near: 0.1, far: 500 }}
+      gl={{
+        antialias: true,
+        toneMapping: THREE.ACESFilmicToneMapping,
+        toneMappingExposure: 1.2,
+      }}
+      style={{ background: '#050a14' }}
+    >
+      <SceneContent />
+    </Canvas>
+  );
+}
+
+
+
+================================================================================
+  📄 src/components/Sidebar.tsx
+  📝 Painel lateral completo
+  📏 11,069 bytes | 305 linhas
+================================================================================
+
+import { useMemo } from 'react';
+import { useStore } from '../lib/store';
+import { GROUP_CONFIGS, GROUP_CONFIG_MAP } from '../types';
+import type { SatelliteGroup } from '../types';
+import {
+  Play,
+  Pause,
+  RotateCcw,
+  Search,
+  Satellite,
+  ChevronRight,
+  Clock,
+  Zap,
+  Globe,
+  X,
+} from 'lucide-react';
+
+const SPEED_OPTIONS = [
+  { label: '1×', value: 1 },
+  { label: '10×', value: 10 },
+  { label: '60×', value: 60 },
+  { label: '600×', value: 600 },
+];
+
+export function Sidebar() {
+  const {
+    satellites,
+    loading,
+    error,
+    lastUpdated,
+    activeGroups,
+    searchQuery,
+    isPlaying,
+    speedMultiplier,
+    selectedSatellite,
+    selectedPosition,
+    toggleGroup,
+    setSearchQuery,
+    setIsPlaying,
+    setSpeedMultiplier,
+    selectSatellite,
+  } = useStore();
+
+  const simulationTime = useStore((s) => s.simulationTime);
+
+  const filteredSats = useMemo(() => {
+    const q = searchQuery.toLowerCase();
+    return satellites.filter((s) => {
+      if (!activeGroups.has(s.group)) return false;
+      if (q && !s.name.toLowerCase().includes(q) && s.noradId !== q) return false;
+      return true;
+    });
+  }, [satellites, activeGroups, searchQuery]);
+
+  const groupCounts = useMemo(() => {
+    const counts = new Map<SatelliteGroup, number>();
+    satellites.forEach((s) => {
+      counts.set(s.group, (counts.get(s.group) || 0) + 1);
+    });
+    return counts;
+  }, [satellites]);
+
+  const formatTime = (d: Date) => {
+    return d.toLocaleTimeString('pt-BR', {
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit',
+    });
+  };
+
+  const formatDate = (d: Date) => {
+    return d.toLocaleDateString('pt-BR', {
+      day: '2-digit',
+      month: 'short',
+      year: 'numeric',
+    });
+  };
+
+  return (
+    <div className="flex flex-col h-full w-full max-w-[380px] bg-[#0a0f1a]/90 backdrop-blur-xl border-r border-white/5 text-white overflow-hidden">
+      {/* Header */}
+      <div className="p-5 border-b border-white/5">
+        <div className="flex items-center gap-3 mb-1">
+          <Globe className="w-6 h-6 text-cyan-400" />
+          <h1 className="text-xl font-bold tracking-tight bg-gradient-to-r from-cyan-400 to-blue-500 bg-clip-text text-transparent">
+            Sistemas GNSS
+          </h1>
+        </div>
+        <p className="text-xs text-white/40 font-mono">
+          Visualização Orbital 3D em Tempo Real
+        </p>
+      </div>
+
+      {/* Controles de Tempo */}
+      <div className="p-4 border-b border-white/5 space-y-3">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2 text-sm text-white/60">
+            <Clock className="w-4 h-4" />
+            <span className="font-mono">{formatTime(simulationTime)}</span>
+          </div>
+          <div className="flex items-center gap-1">
+            <button
+              onClick={() => setIsPlaying(!isPlaying)}
+              className="p-2 rounded-lg bg-white/5 hover:bg-white/10 transition-colors cursor-pointer"
+            >
+              {isPlaying ? (
+                <Pause className="w-4 h-4 text-cyan-400" />
+              ) : (
+                <Play className="w-4 h-4 text-cyan-400" />
+              )}
+            </button>
+            <button
+              onClick={() => useStore.getState().setSimulationTime(new Date())}
+              className="p-2 rounded-lg bg-white/5 hover:bg-white/10 transition-colors cursor-pointer"
+            >
+              <RotateCcw className="w-4 h-4 text-white/60" />
+            </button>
+          </div>
+        </div>
+
+        <div className="flex items-center gap-2">
+          <Zap className="w-3 h-3 text-white/30" />
+          <div className="flex gap-1">
+            {SPEED_OPTIONS.map((opt) => (
+              <button
+                key={opt.value}
+                onClick={() => setSpeedMultiplier(opt.value)}
+                className={`px-2.5 py-1 rounded text-xs font-mono transition-all cursor-pointer ${
+                  speedMultiplier === opt.value
+                    ? 'bg-cyan-500/20 text-cyan-400 border border-cyan-500/30'
+                    : 'bg-white/5 text-white/40 hover:bg-white/10'
+                }`}
+              >
+                {opt.label}
+              </button>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      {/* Filtros por Grupo */}
+      <div className="p-4 border-b border-white/5">
+        <h3 className="text-xs font-semibold text-white/30 uppercase tracking-wider mb-3">
+          Constelações
+        </h3>
+        <div className="space-y-1.5">
+          {GROUP_CONFIGS.map((group) => {
+            const isActive = activeGroups.has(group.key);
+            const count = groupCounts.get(group.key) || 0;
+            return (
+              <button
+                key={group.key}
+                onClick={() => toggleGroup(group.key)}
+                className={`w-full flex items-center justify-between px-3 py-2 rounded-lg transition-all cursor-pointer ${
+                  isActive ? 'bg-white/5' : 'opacity-40'
+                } hover:bg-white/10`}
+              >
+                <div className="flex items-center gap-2.5">
+                  <div
+                    className="w-2.5 h-2.5 rounded-full"
+                    style={{ backgroundColor: group.color }}
+                  />
+                  <span className="text-sm text-white/80">{group.label}</span>
+                </div>
+                <span className="text-xs font-mono text-white/30">{count}</span>
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* Busca */}
+      <div className="p-4 border-b border-white/5">
+        <div className="relative">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/30" />
+          <input
+            type="text"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            placeholder="Buscar satélite ou NORAD..."
+            className="w-full pl-9 pr-3 py-2 bg-white/5 border border-white/10 rounded-lg text-sm text-white placeholder:text-white/20 focus:outline-none focus:border-cyan-500/30 transition-colors font-mono"
+          />
+        </div>
+        <div className="mt-2 text-xs text-white/30 font-mono">
+          {filteredSats.length} satélites visíveis
+        </div>
+      </div>
+
+      {/* Lista de Satélites */}
+      <div className="flex-1 overflow-y-auto p-2 space-y-0.5">
+        {loading && (
+          <div className="flex items-center justify-center py-8">
+            <div className="w-5 h-5 border-2 border-cyan-400/30 border-t-cyan-400 rounded-full animate-spin" />
+          </div>
+        )}
+
+        {error && (
+          <div className="p-3 mx-2 rounded-lg bg-red-500/10 border border-red-500/20 text-xs text-red-400">
+            {error}
+          </div>
+        )}
+
+        {filteredSats.map((sat) => {
+          const config = GROUP_CONFIG_MAP[sat.group];
+          const isSelected = selectedSatellite?.noradId === sat.noradId;
+          return (
+            <button
+              key={sat.noradId}
+              onClick={() => selectSatellite(isSelected ? null : sat)}
+              className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all text-left cursor-pointer ${
+                isSelected
+                  ? 'bg-cyan-500/10 border border-cyan-500/20'
+                  : 'hover:bg-white/5 border border-transparent'
+              }`}
+            >
+              <Satellite
+                className="w-4 h-4 shrink-0"
+                style={{ color: config.color }}
+              />
+              <div className="flex-1 min-w-0">
+                <div className="text-sm text-white/80 truncate">{sat.name}</div>
+                <div className="text-xs text-white/30 font-mono">
+                  NORAD {sat.noradId}
+                </div>
+              </div>
+              <ChevronRight
+                className={`w-4 h-4 text-white/20 shrink-0 transition-transform ${
+                  isSelected ? 'rotate-90 text-cyan-400' : ''
+                }`}
+              />
+            </button>
+          );
+        })}
+      </div>
+
+      {/* Detalhes do Satélite Selecionado */}
+      {selectedSatellite && selectedPosition && (
+        <div className="border-t border-white/5 p-4 bg-white/[0.02]">
+          <div className="flex items-center justify-between mb-3">
+            <div className="flex items-center gap-2">
+              <div
+                className="w-2 h-2 rounded-full"
+                style={{ backgroundColor: GROUP_CONFIG_MAP[selectedSatellite.group].color }}
+              />
+              <span className="text-sm font-semibold text-white/90 truncate max-w-[200px]">
+                {selectedSatellite.name}
+              </span>
+            </div>
+            <button
+              onClick={() => selectSatellite(null)}
+              className="p-1 rounded hover:bg-white/10 transition-colors cursor-pointer"
+            >
+              <X className="w-4 h-4 text-white/40" />
+            </button>
+          </div>
+
+          <div className="grid grid-cols-2 gap-2 text-xs font-mono">
+            <div className="bg-white/5 rounded-lg p-2.5">
+              <div className="text-white/30 mb-1">Altitude</div>
+              <div className="text-cyan-400">
+                {selectedPosition.alt.toFixed(1)} <span className="text-white/30">km</span>
+              </div>
+            </div>
+            <div className="bg-white/5 rounded-lg p-2.5">
+              <div className="text-white/30 mb-1">Velocidade</div>
+              <div className="text-cyan-400">
+                {selectedPosition.velocity.toFixed(2)} <span className="text-white/30">km/s</span>
+              </div>
+            </div>
+            <div className="bg-white/5 rounded-lg p-2.5">
+              <div className="text-white/30 mb-1">Inclinação</div>
+              <div className="text-cyan-400">
+                {selectedPosition.inclination.toFixed(2)}°
+              </div>
+            </div>
+            <div className="bg-white/5 rounded-lg p-2.5">
+              <div className="text-white/30 mb-1">Período</div>
+              <div className="text-cyan-400">
+                {selectedPosition.period.toFixed(1)} <span className="text-white/30">min</span>
+              </div>
+            </div>
+          </div>
+
+          <div className="mt-2 bg-white/5 rounded-lg p-2.5 text-xs font-mono">
+            <div className="text-white/30 mb-1">Posição</div>
+            <div className="text-white/60">
+              {selectedPosition.lat.toFixed(4)}°, {selectedPosition.lon.toFixed(4)}°
+            </div>
+          </div>
+
+          <div className="mt-2 text-[10px] text-white/20 font-mono">
+            NORAD ID: {selectedSatellite.noradId} · {selectedSatellite.group}
+          </div>
+        </div>
+      )}
+
+      {/* Footer */}
+      {lastUpdated && (
+        <div className="p-3 border-t border-white/5 text-[10px] text-white/20 font-mono text-center">
+          TLE atualizado: {formatDate(lastUpdated)} {formatTime(lastUpdated)}
+        </div>
+      )}
+    </div>
+  );
+}
+
+
+
+================================================================================
+  📄 src/components/Legend.tsx
+  📝 Legenda flutuante de cores
+  📏 731 bytes | 22 linhas
+================================================================================
+
+import { GROUP_CONFIGS } from '../types';
+
+export function Legend() {
+  return (
+    <div className="absolute bottom-6 right-6 bg-[#0a0f1a]/80 backdrop-blur-xl border border-white/5 rounded-xl p-4">
+      <h4 className="text-[10px] font-semibold text-white/30 uppercase tracking-wider mb-2">
+        Legenda
+      </h4>
+      <div className="space-y-1.5">
+        {GROUP_CONFIGS.map((group) => (
+          <div key={group.key} className="flex items-center gap-2">
+            <div
+              className="w-2 h-2 rounded-full"
+              style={{ backgroundColor: group.color }}
+            />
+            <span className="text-xs text-white/60">{group.label}</span>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+
+
+================================================================================
+  📄 src/components/FpsCounter.tsx
+  📝 Contador de FPS
+  📏 1,075 bytes | 38 linhas
+================================================================================
+
+import { useRef, useState, useEffect } from 'react';
+
+export function FpsCounter() {
+  const [fps, setFps] = useState(0);
+  const frameCount = useRef(0);
+  const lastTime = useRef(performance.now());
+
+  useEffect(() => {
+    let raf: number;
+
+    const loop = () => {
+      frameCount.current++;
+      const now = performance.now();
+      const elapsed = now - lastTime.current;
+
+      if (elapsed >= 1000) {
+        setFps(Math.round((frameCount.current * 1000) / elapsed));
+        frameCount.current = 0;
+        lastTime.current = now;
+      }
+
+      raf = requestAnimationFrame(loop);
+    };
+
+    raf = requestAnimationFrame(loop);
+    return () => cancelAnimationFrame(raf);
+  }, []);
+
+  const colorClass = fps >= 55 ? 'text-green-400' : fps >= 30 ? 'text-yellow-400' : 'text-red-400';
+
+  return (
+    <div className="absolute top-6 right-6 bg-[#0a0f1a]/80 backdrop-blur-xl border border-white/5 rounded-lg px-3 py-1.5">
+      <span className="text-[10px] font-mono text-white/30">
+        FPS: <span className={colorClass}>{fps}</span>
+      </span>
+    </div>
+  );
+}
+
+
+
+================================================================================
+  📄 README.md
+  📝 Documentação do projeto
+  📏 5,949 bytes | 195 linhas
+================================================================================
+
+# 🛰️ Sistemas GNSS — Visualização Orbital 3D
+
+Aplicação web **frontend-only** para visualização interativa em tempo real de satélites GNSS e mega-constelações orbitando a Terra em 3D.
+
+> 🌐 **Live Demo**: [sistemas-gnss-3d.vercel.app](https://sistemas-gnss-3d.vercel.app) *(exemplo)*
+
+---
+
+## 🚀 Como rodar localmente
+
+```bash
+# Clonar o repositório
+git clone https://github.com/dronreef2/SistemasGNSS.git
+cd SistemasGNSS/sistemas-gnss-3d
+
+# Instalar dependências
+npm install
+
+# Iniciar servidor de desenvolvimento
+npm run dev
+```
+
+Acesse `http://localhost:5173`
+
+---
+
+## 🏗️ Stack Tecnológica
+
+| Tecnologia | Versão | Propósito |
+|------------|--------|-----------|
+| **React** | 19.x | UI declarativa |
+| **TypeScript** | 5.8 | Tipagem estática |
+| **Vite** | 6.x | Build tool |
+| **Three.js** | 0.175 | Renderização 3D |
+| **React Three Fiber** | 9.x | Three.js declarativo |
+| **@react-three/drei** | 10.x | Helpers 3D |
+| **satellite.js** | 5.x | Propagação SGP4 |
+| **Zustand** | 5.x | Estado global |
+| **Tailwind CSS** | 4.x | Estilização |
+| **Lucide React** | 0.475 | Ícones |
+
+---
+
+## 📡 Fonte de Dados Orbitais
+
+TLEs (Two-Line Elements) consumidos diretamente da **CelesTrak** (sem API key):
+
+| Grupo | URL CelesTrak |
+|-------|---------------|
+| GPS (NAVSTAR) | `gp.php?GROUP=gps-ops` |
+| GLONASS | `gp.php?GROUP=glo-ops` |
+| Galileo | `gp.php?GROUP=galileo` |
+| BeiDou | `gp.php?GROUP=beidou` |
+| Starlink | `gp.php?GROUP=starlink` |
+| ISS | `gp.php?CATNR=25544` |
+
+### Estratégia de Cache
+
+- **Cache**: `localStorage` com TTL de **2 horas**
+- **Fallback**: Se offline/falha, usa cache expirado
+- **Refetch**: Automático a cada 2h em background
+
+---
+
+## 🎯 Funcionalidades
+
+- ✅ **Terra 3D** — texturas diurna/noturna procedurais, nuvens rotativas, glow atmosférico via shader customizado
+- ✅ **Satélites** — `InstancedMesh` para performance + sprites glow por constelação
+- ✅ **Trilhas Orbitais** — 60 pontos propagados para satélite selecionado
+- ✅ **Footprint** — Anel aproximado no solo (satélite selecionado)
+- ✅ **Estrelas** — 4000 pontos com variação de tamanho
+- ✅ **Controles de Tempo** — play/pause, reset, 1×/10×/60×/600×
+- ✅ **Filtros** — por constelação + busca por nome/NORAD
+- ✅ **Detalhes** — altitude, velocidade, inclinação, período, posição geodésica
+- ✅ **FPS** — contador em tempo real
+- ✅ **Design** — tema escuro futurista com acentos cyan
+
+---
+
+## ⚡ Otimizações de Performance
+
+| Técnica | Impacto |
+|---------|---------|
+| `InstancedMesh` | Todos os satélites em 1 draw call |
+| Sprites glow | Bloom via canvas texturizado (sem post-processing pesado) |
+| Propagação frame-a-frame | Sem polling, cálculo SGP4 no cliente |
+| Frustum culling | Objetos fora da câmera não processados |
+| `useMemo` | Evita recálculos desnecessários |
+| Zustand selectors | Re-render seletiva |
+
+---
+
+## 🏛️ Arquitetura
+
+```
+sistemas-gnss-3d/
+├── .github/workflows/deploy.yml   # CI/CD GitHub Pages
+├── public/
+├── src/
+│   ├── components/
+│   │   ├── Earth.tsx              # Terra 3D + atmosfera + shader glow
+│   │   ├── Satellites.tsx         # InstancedMesh + sprites + trilhas + footprint
+│   │   ├── Stars.tsx              # Background estrelado (4000 pontos)
+│   │   ├── Scene.tsx              # Canvas R3F + loop de simulação temporal
+│   │   ├── Sidebar.tsx            # Painel lateral completo (filtros, busca, lista, detalhes)
+│   │   ├── Legend.tsx             # Legenda flutuante de cores
+│   │   └── FpsCounter.tsx         # Contador de FPS
+│   ├── lib/
+│   │   ├── tle.ts                 # Fetch TLE CelesTrak + parse + propagação SGP4 + cache
+│   │   └── store.ts               # Estado global Zustand (tempo, filtros, seleção)
+│   ├── types/
+│   │   └── index.ts               # Tipos TypeScript + configurações de grupo
+│   ├── App.tsx                    # Composição principal + inicialização TLE
+│   ├── main.tsx                   # Entry point React
+│   └── index.css                  # Tailwind + estilos globais
+├── package.json
+├── vite.config.ts
+├── tsconfig.json
+├── vercel.json                    # Config deploy Vercel
+├── netlify.toml                   # Config deploy Netlify
+└── README.md
+```
+
+---
+
+## 🌐 Deploy Gratuito
+
+### Opção 1: Vercel (Recomendado)
+
+1. Fork este repositório
+2. Acesse [vercel.com](https://vercel.com) → "Add New Project"
+3. Importe o repo → selecione a pasta `sistemas-gnss-3d`
+4. Framework preset: **Vite**
+5. Deploy!
+
+> URL será: `https://<seu-projeto>.vercel.app`
+
+### Opção 2: Netlify
+
+1. Fork este repositório
+2. Acesse [netlify.com](https://netlify.com) → "Add new site" → "Import from Git"
+3. Selecione o repo → configure:
+   - **Build command**: `npm run build`
+   - **Publish directory**: `dist`
+4. Deploy!
+
+> URL será: `https://<seu-site>.netlify.app`
+
+### Opção 3: GitHub Pages
+
+1. Fork este repositório
+2. Vá em **Settings → Pages**
+3. Source: **GitHub Actions**
+4. O workflow `.github/workflows/deploy.yml` já está configurado
+5. Faça push para `main` → deploy automático
+
+> URL será: `https://<seu-usuario>.github.io/SistemasGNSS/`
+
+---
+
+## ⚠️ Limitações Conhecidas
+
+| Limitação | Detalhe |
+|-----------|---------|
+| Texturas | Procedurais (canvas) — não são fotos reais da NASA |
+| Footprint | Aproximação baseada em altitude média orbital |
+| Trilhas | Amostras discretas (60 pts) — não curvas contínuas |
+| Geostacionárias | Sem precisão de sub-ponto |
+| CORS | CelesTrak pode bloquear em alguns ambientes |
+| Mobile | Layout otimizado para desktop (sidebar fixa) |
+
+---
+
+## 🔮 Próximos Passos
+
+- [ ] Texturas reais NASA (Blue Marble)
+- [ ] Post-processing bloom real (@react-three/postprocessing)
+- [ ] Órbitas 3D contínuas (Catmull-Rom splines)
+- [ ] Modo "seguir satélite" (câmera orbitando)
+- [ ] Predição de passagens visíveis do solo
+- [ ] Exportação RINEX
+- [ ] Integração com backend SistemasGNSS
+- [ ] Layout responsivo para mobile
+
+---
+
+## 📝 Licença
+
+MIT — Projeto educacional.
+
+---
+
+<p align="center">
+  <sub>Feito com 🛰️ para a comunidade GNSS</sub>
+</p>
+
+
