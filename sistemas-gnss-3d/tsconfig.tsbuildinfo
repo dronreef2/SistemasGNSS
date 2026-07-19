@@ -1,0 +1,1 @@
+{"root":["./src/App.tsx","./src/main.tsx","./src/components/Earth.tsx","./src/components/FpsCounter.tsx","./src/components/Legend.tsx","./src/components/Satellites.tsx","./src/components/Scene.tsx","./src/components/Sidebar.tsx","./src/components/Stars.tsx","./src/lib/store.ts","./src/lib/tle.ts","./src/types/index.ts"],"version":"5.8.3"}

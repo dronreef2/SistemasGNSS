@@ -1,62 +1,191 @@
-import type { SatelliteData, SatelliteGroup } from '../types'
+import * as satellite from 'satellite.js';
+import type { SatelliteData, SatelliteGroup } from '../types';
+import { GROUP_CONFIGS } from '../types';
 
-const SAMPLE_TLE: Record<SatelliteGroup, SatelliteData[]> = {
-  gps: [
-    {
-      name: 'GPS BIIR-2  (PRN 13)',
-      noradId: '24876',
-      group: 'gps',
-      tle1: '1 24876U 97035A   26199.39980556 -.00000063  00000+0  00000+0 0  9998',
-      tle2: '2 24876  55.3533 301.6110 0104308  57.9170 303.1135  2.00564202212812',
-    },
-  ],
-  glonass: [
-    {
-      name: 'COSMOS 2522',
-      noradId: '42939',
-      group: 'glonass',
-      tle1: '1 42939U 17055A   26199.28745565  .00000028  00000+0  00000+0 0  9990',
-      tle2: '2 42939  64.8913 341.4439 0016205 220.5286 139.4290  2.13103227 68601',
-    },
-  ],
-  galileo: [
-    {
-      name: 'GSAT0219 (GALILEO-FM15)',
-      noradId: '43566',
-      group: 'galileo',
-      tle1: '1 43566U 18079A   26199.34787088 -.00000066  00000+0  00000+0 0  9990',
-      tle2: '2 43566  56.9985  61.2474 0001075 261.8990  98.1366  1.70475044 48057',
-    },
-  ],
-  beidou: [
-    {
-      name: 'BEIDOU-3 M20',
-      noradId: '43602',
-      group: 'beidou',
-      tle1: '1 43602U 18093A   26199.54811536  .00000056  00000+0  00000+0 0  9992',
-      tle2: '2 43602  55.0623  55.7063 0005507 359.0649   0.9810  1.86231514 52672',
-    },
-  ],
-  starlink: [
-    {
-      name: 'STARLINK-10985',
-      noradId: '60498',
-      group: 'starlink',
-      tle1: '1 60498U 24140A   26199.48772006  .00002967  00000+0  17726-3 0  9994',
-      tle2: '2 60498  53.1526  53.5508 0001327  85.3080 274.8098 15.06496495 51673',
-    },
-  ],
-  iss: [
-    {
-      name: 'ISS (ZARYA)',
-      noradId: '25544',
-      group: 'iss',
-      tle1: '1 25544U 98067A   26199.61093418  .00009040  00000+0  16606-3 0  9991',
-      tle2: '2 25544  51.6389 353.8734 0004383 121.3250 322.0110 15.50120590525592',
-    },
-  ],
+const CACHE_KEY = 'gnss_tle_cache_v1';
+const CACHE_TTL_MS = 2 * 60 * 60 * 1000; // 2 horas
+
+interface TleCacheEntry {
+  group: SatelliteGroup;
+  rawTle: string;
+  timestamp: number;
+  satellites: SatelliteData[];
+}
+
+interface TleCache {
+  entries: Record<string, TleCacheEntry>;
+  lastFetch: number;
+}
+
+function loadCache(): TleCache | null {
+  try {
+    const raw = localStorage.getItem(CACHE_KEY);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw) as TleCache;
+    if (Date.now() - parsed.lastFetch > CACHE_TTL_MS) return null;
+    return parsed;
+  } catch {
+    return null;
+  }
+}
+
+function saveCache(cache: TleCache) {
+  try {
+    localStorage.setItem(CACHE_KEY, JSON.stringify(cache));
+  } catch {
+    // Storage pode estar cheio — silencioso
+  }
+}
+
+function parseTle(raw: string, group: SatelliteGroup): SatelliteData[] {
+  const lines = raw.trim().split('\n').map((l) => l.trim()).filter(Boolean);
+  const sats: SatelliteData[] = [];
+
+  for (let i = 0; i < lines.length - 2; i += 3) {
+    const name = lines[i].trim();
+    const tle1 = lines[i + 1];
+    const tle2 = lines[i + 2];
+
+    if (!tle1 || !tle2 || !tle1.startsWith('1 ') || !tle2.startsWith('2 ')) continue;
+
+    let satrec: satellite.SatRec | null = null;
+    try {
+      satrec = satellite.twoline2satrec(tle1, tle2);
+    } catch {
+      continue;
+    }
+
+    const noradId = tle1.substring(2, 7).trim();
+
+    sats.push({
+      name,
+      noradId,
+      tleLine1: tle1,
+      tleLine2: tle2,
+      group,
+      satrec,
+    });
+  }
+
+  return sats;
+}
+
+export async function fetchTleGroup(group: SatelliteGroup): Promise<SatelliteData[]> {
+  const config = GROUP_CONFIGS.find((g) => g.key === group);
+  if (!config) throw new Error(`Grupo desconhecido: ${group}`);
+
+  const cache = loadCache();
+  if (cache && cache.entries[group] && Date.now() - cache.entries[group].timestamp < CACHE_TTL_MS) {
+    return cache.entries[group].satellites;
+  }
+
+  try {
+    const response = await fetch(config.celestrakUrl, { cache: 'no-store' });
+    if (!response.ok) throw new Error(`HTTP ${response.status}`);
+    const raw = await response.text();
+
+    const satellites = parseTle(raw, group);
+
+    const newCache: TleCache = cache || { entries: {}, lastFetch: Date.now() };
+    newCache.entries[group] = { group, rawTle: raw, timestamp: Date.now(), satellites };
+    newCache.lastFetch = Date.now();
+    saveCache(newCache);
+
+    return satellites;
+  } catch (err) {
+    // Fallback para cache antigo mesmo expirado
+    if (cache && cache.entries[group]) {
+      console.warn(`[TLE] Fetch falhou para ${group}, usando cache antigo.`);
+      return cache.entries[group].satellites;
+    }
+    throw err;
+  }
 }
 
 export async function fetchAllTle(): Promise<SatelliteData[]> {
-  return Object.values(SAMPLE_TLE).flat()
+  const results = await Promise.allSettled(
+    GROUP_CONFIGS.map((g) => fetchTleGroup(g.key))
+  );
+
+  const all: SatelliteData[] = [];
+  results.forEach((r, i) => {
+    if (r.status === 'fulfilled') {
+      all.push(...r.value);
+    } else {
+      console.error(`[TLE] Falha ao carregar ${GROUP_CONFIGS[i].key}:`, r.reason);
+    }
+  });
+
+  return all;
 }
+
+export function propagateSatellite(
+  sat: SatelliteData,
+  date: Date
+): { position: { x: number; y: number; z: number }; velocity: number; gmst: number } | null {
+  if (!sat.satrec) return null;
+
+  try {
+    const positionAndVelocity = satellite.propagate(sat.satrec, date);
+    if (
+      !positionAndVelocity.position ||
+      typeof positionAndVelocity.position === 'boolean'
+    )
+      return null;
+
+    const gmst = satellite.gstime(date);
+    const positionEci = positionAndVelocity.position as satellite.EciVec3<number>;
+    const velocityEci = positionAndVelocity.velocity as satellite.EciVec3<number>;
+
+    // Converter ECI para ECEF
+    const positionEcf = satellite.eciToEcf(positionEci, gmst);
+
+    const x = positionEcf.x * SCALE;
+    const y = positionEcf.z * SCALE; // Three.js: Y é up
+    const z = -positionEcf.y * SCALE; // Three.js: Z é para frente (inverte)
+
+    const vx = velocityEci.x;
+    const vy = velocityEci.y;
+    const vz = velocityEci.z;
+    const velocity = Math.sqrt(vx * vx + vy * vy + vz * vz);
+
+    return { position: { x, y, z }, velocity, gmst };
+  } catch {
+    return null;
+  }
+}
+
+export function getGeodetic(
+  sat: SatelliteData,
+  date: Date
+): { lat: number; lon: number; alt: number; inclination: number; period: number } | null {
+  if (!sat.satrec) return null;
+
+  try {
+    const positionAndVelocity = satellite.propagate(sat.satrec, date);
+    if (
+      !positionAndVelocity.position ||
+      typeof positionAndVelocity.position === 'boolean'
+    )
+      return null;
+
+    const gmst = satellite.gstime(date);
+    const positionEci = positionAndVelocity.position as satellite.EciVec3<number>;
+    const positionGd = satellite.eciToGeodetic(positionEci, gmst);
+
+    const lat = satellite.degreesLat(positionGd.latitude);
+    const lon = satellite.degreesLong(positionGd.longitude);
+    const alt = positionGd.height;
+
+    // Inclinação e período orbitais
+    const inclination = sat.satrec.inclo ? satellite.degreesLat(sat.satrec.inclo) : 0;
+    const meanMotion = sat.satrec.no;
+    const period = meanMotion > 0 ? (2 * Math.PI) / meanMotion / 60 : 0; // minutos
+
+    return { lat, lon, alt, inclination, period };
+  } catch {
+    return null;
+  }
+}
+
+const SCALE = 1 / 1000;
