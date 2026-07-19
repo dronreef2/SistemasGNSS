@@ -1,7 +1,7 @@
-import { useMemo } from 'react'
-import { useStore } from '../lib/store'
-import { GROUP_CONFIGS, GROUP_CONFIG_MAP } from '../types'
-import type { SatelliteGroup } from '../types'
+import { useMemo } from 'react';
+import { useStore } from '../lib/store';
+import { GROUP_CONFIGS, GROUP_CONFIG_MAP } from '../types';
+import type { SatelliteGroup } from '../types';
 import {
   Play,
   Pause,
@@ -13,14 +13,14 @@ import {
   Zap,
   Globe,
   X,
-} from 'lucide-react'
+} from 'lucide-react';
 
 const SPEED_OPTIONS = [
   { label: '1×', value: 1 },
   { label: '10×', value: 10 },
   { label: '60×', value: 60 },
   { label: '600×', value: 600 },
-]
+];
 
 export function Sidebar() {
   const {
@@ -32,52 +32,53 @@ export function Sidebar() {
     searchQuery,
     isPlaying,
     speedMultiplier,
-    simulationTime,
     selectedSatellite,
     selectedPosition,
     toggleGroup,
     setSearchQuery,
     setIsPlaying,
     setSpeedMultiplier,
-    setSimulationTime,
     selectSatellite,
-  } = useStore()
+  } = useStore();
+
+  const simulationTime = useStore((s) => s.simulationTime);
 
   const filteredSats = useMemo(() => {
-    const q = searchQuery.toLowerCase()
+    const q = searchQuery.toLowerCase();
     return satellites.filter((s) => {
-      if (!activeGroups.has(s.group)) return false
-      if (q && !s.name.toLowerCase().includes(q) && s.noradId !== q) return false
-      return true
-    })
-  }, [satellites, activeGroups, searchQuery])
+      if (!activeGroups.has(s.group)) return false;
+      if (q && !s.name.toLowerCase().includes(q) && s.noradId !== q) return false;
+      return true;
+    });
+  }, [satellites, activeGroups, searchQuery]);
 
   const groupCounts = useMemo(() => {
-    const counts = new Map<SatelliteGroup, number>()
+    const counts = new Map<SatelliteGroup, number>();
     satellites.forEach((s) => {
-      counts.set(s.group, (counts.get(s.group) || 0) + 1)
-    })
-    return counts
-  }, [satellites])
+      counts.set(s.group, (counts.get(s.group) || 0) + 1);
+    });
+    return counts;
+  }, [satellites]);
 
   const formatTime = (d: Date) => {
     return d.toLocaleTimeString('pt-BR', {
       hour: '2-digit',
       minute: '2-digit',
       second: '2-digit',
-    })
-  }
+    });
+  };
 
   const formatDate = (d: Date) => {
     return d.toLocaleDateString('pt-BR', {
       day: '2-digit',
       month: 'short',
       year: 'numeric',
-    })
-  }
+    });
+  };
 
   return (
     <div className="flex flex-col h-full w-full max-w-[380px] bg-[#0a0f1a]/90 backdrop-blur-xl border-r border-white/5 text-white overflow-hidden">
+      {/* Header */}
       <div className="p-5 border-b border-white/5">
         <div className="flex items-center gap-3 mb-1">
           <Globe className="w-6 h-6 text-cyan-400" />
@@ -85,9 +86,12 @@ export function Sidebar() {
             Sistemas GNSS
           </h1>
         </div>
-        <p className="text-xs text-white/40 font-mono">Visualização Orbital 3D em Tempo Real</p>
+        <p className="text-xs text-white/40 font-mono">
+          Visualização Orbital 3D em Tempo Real
+        </p>
       </div>
 
+      {/* Controles de Tempo */}
       <div className="p-4 border-b border-white/5 space-y-3">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2 text-sm text-white/60">
@@ -97,13 +101,17 @@ export function Sidebar() {
           <div className="flex items-center gap-1">
             <button
               onClick={() => setIsPlaying(!isPlaying)}
-              className="p-2 rounded-lg bg-white/5 hover:bg-white/10 transition-colors"
+              className="p-2 rounded-lg bg-white/5 hover:bg-white/10 transition-colors cursor-pointer"
             >
-              {isPlaying ? <Pause className="w-4 h-4 text-cyan-400" /> : <Play className="w-4 h-4 text-cyan-400" />}
+              {isPlaying ? (
+                <Pause className="w-4 h-4 text-cyan-400" />
+              ) : (
+                <Play className="w-4 h-4 text-cyan-400" />
+              )}
             </button>
             <button
-              onClick={() => setSimulationTime(new Date())}
-              className="p-2 rounded-lg bg-white/5 hover:bg-white/10 transition-colors"
+              onClick={() => useStore.getState().setSimulationTime(new Date())}
+              className="p-2 rounded-lg bg-white/5 hover:bg-white/10 transition-colors cursor-pointer"
             >
               <RotateCcw className="w-4 h-4 text-white/60" />
             </button>
@@ -117,7 +125,7 @@ export function Sidebar() {
               <button
                 key={opt.value}
                 onClick={() => setSpeedMultiplier(opt.value)}
-                className={`px-2.5 py-1 rounded text-xs font-mono transition-all ${
+                className={`px-2.5 py-1 rounded text-xs font-mono transition-all cursor-pointer ${
                   speedMultiplier === opt.value
                     ? 'bg-cyan-500/20 text-cyan-400 border border-cyan-500/30'
                     : 'bg-white/5 text-white/40 hover:bg-white/10'
@@ -130,31 +138,38 @@ export function Sidebar() {
         </div>
       </div>
 
+      {/* Filtros por Grupo */}
       <div className="p-4 border-b border-white/5">
-        <h3 className="text-xs font-semibold text-white/30 uppercase tracking-wider mb-3">Constelações</h3>
+        <h3 className="text-xs font-semibold text-white/30 uppercase tracking-wider mb-3">
+          Constelações
+        </h3>
         <div className="space-y-1.5">
           {GROUP_CONFIGS.map((group) => {
-            const isActive = activeGroups.has(group.key)
-            const count = groupCounts.get(group.key) || 0
+            const isActive = activeGroups.has(group.key);
+            const count = groupCounts.get(group.key) || 0;
             return (
               <button
                 key={group.key}
                 onClick={() => toggleGroup(group.key)}
-                className={`w-full flex items-center justify-between px-3 py-2 rounded-lg transition-all ${
+                className={`w-full flex items-center justify-between px-3 py-2 rounded-lg transition-all cursor-pointer ${
                   isActive ? 'bg-white/5' : 'opacity-40'
                 } hover:bg-white/10`}
               >
                 <div className="flex items-center gap-2.5">
-                  <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: group.color }} />
+                  <div
+                    className="w-2.5 h-2.5 rounded-full"
+                    style={{ backgroundColor: group.color }}
+                  />
                   <span className="text-sm text-white/80">{group.label}</span>
                 </div>
                 <span className="text-xs font-mono text-white/30">{count}</span>
               </button>
-            )
+            );
           })}
         </div>
       </div>
 
+      {/* Busca */}
       <div className="p-4 border-b border-white/5">
         <div className="relative">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/30" />
@@ -166,9 +181,12 @@ export function Sidebar() {
             className="w-full pl-9 pr-3 py-2 bg-white/5 border border-white/10 rounded-lg text-sm text-white placeholder:text-white/20 focus:outline-none focus:border-cyan-500/30 transition-colors font-mono"
           />
         </div>
-        <div className="mt-2 text-xs text-white/30 font-mono">{filteredSats.length} satélites visíveis</div>
+        <div className="mt-2 text-xs text-white/30 font-mono">
+          {filteredSats.length} satélites visíveis
+        </div>
       </div>
 
+      {/* Lista de Satélites */}
       <div className="flex-1 overflow-y-auto p-2 space-y-0.5">
         {loading && (
           <div className="flex items-center justify-center py-8">
@@ -177,26 +195,33 @@ export function Sidebar() {
         )}
 
         {error && (
-          <div className="p-3 mx-2 rounded-lg bg-red-500/10 border border-red-500/20 text-xs text-red-400">{error}</div>
+          <div className="p-3 mx-2 rounded-lg bg-red-500/10 border border-red-500/20 text-xs text-red-400">
+            {error}
+          </div>
         )}
 
         {filteredSats.map((sat) => {
-          const config = GROUP_CONFIG_MAP[sat.group]
-          const isSelected = selectedSatellite?.noradId === sat.noradId
+          const config = GROUP_CONFIG_MAP[sat.group];
+          const isSelected = selectedSatellite?.noradId === sat.noradId;
           return (
             <button
               key={sat.noradId}
               onClick={() => selectSatellite(isSelected ? null : sat)}
-              className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all text-left ${
+              className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all text-left cursor-pointer ${
                 isSelected
                   ? 'bg-cyan-500/10 border border-cyan-500/20'
                   : 'hover:bg-white/5 border border-transparent'
               }`}
             >
-              <Satellite className="w-4 h-4 shrink-0" style={{ color: config.color }} />
+              <Satellite
+                className="w-4 h-4 shrink-0"
+                style={{ color: config.color }}
+              />
               <div className="flex-1 min-w-0">
                 <div className="text-sm text-white/80 truncate">{sat.name}</div>
-                <div className="text-xs text-white/30 font-mono">NORAD {sat.noradId}</div>
+                <div className="text-xs text-white/30 font-mono">
+                  NORAD {sat.noradId}
+                </div>
               </div>
               <ChevronRight
                 className={`w-4 h-4 text-white/20 shrink-0 transition-transform ${
@@ -204,18 +229,27 @@ export function Sidebar() {
                 }`}
               />
             </button>
-          )
+          );
         })}
       </div>
 
+      {/* Detalhes do Satélite Selecionado */}
       {selectedSatellite && selectedPosition && (
         <div className="border-t border-white/5 p-4 bg-white/[0.02]">
           <div className="flex items-center justify-between mb-3">
             <div className="flex items-center gap-2">
-              <div className="w-2 h-2 rounded-full" style={{ backgroundColor: GROUP_CONFIG_MAP[selectedSatellite.group].color }} />
-              <span className="text-sm font-semibold text-white/90 truncate max-w-[200px]">{selectedSatellite.name}</span>
+              <div
+                className="w-2 h-2 rounded-full"
+                style={{ backgroundColor: GROUP_CONFIG_MAP[selectedSatellite.group].color }}
+              />
+              <span className="text-sm font-semibold text-white/90 truncate max-w-[200px]">
+                {selectedSatellite.name}
+              </span>
             </div>
-            <button onClick={() => selectSatellite(null)} className="p-1 rounded hover:bg-white/10 transition-colors">
+            <button
+              onClick={() => selectSatellite(null)}
+              className="p-1 rounded hover:bg-white/10 transition-colors cursor-pointer"
+            >
               <X className="w-4 h-4 text-white/40" />
             </button>
           </div>
@@ -235,7 +269,9 @@ export function Sidebar() {
             </div>
             <div className="bg-white/5 rounded-lg p-2.5">
               <div className="text-white/30 mb-1">Inclinação</div>
-              <div className="text-cyan-400">{selectedPosition.inclination.toFixed(2)}°</div>
+              <div className="text-cyan-400">
+                {selectedPosition.inclination.toFixed(2)}°
+              </div>
             </div>
             <div className="bg-white/5 rounded-lg p-2.5">
               <div className="text-white/30 mb-1">Período</div>
@@ -258,11 +294,12 @@ export function Sidebar() {
         </div>
       )}
 
+      {/* Footer */}
       {lastUpdated && (
         <div className="p-3 border-t border-white/5 text-[10px] text-white/20 font-mono text-center">
           TLE atualizado: {formatDate(lastUpdated)} {formatTime(lastUpdated)}
         </div>
       )}
     </div>
-  )
+  );
 }
